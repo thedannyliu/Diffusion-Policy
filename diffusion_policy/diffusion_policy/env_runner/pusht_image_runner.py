@@ -156,6 +156,9 @@ class PushTImageRunner(BaseImageRunner):
         # allocate data
         all_video_paths = [None] * n_inits
         all_rewards = [None] * n_inits
+        
+        # Track inference latency for fair comparison
+        all_latencies = []
 
         for chunk_idx in range(n_chunks):
             start = chunk_idx * n_envs
@@ -198,6 +201,9 @@ class PushTImageRunner(BaseImageRunner):
                 # run policy
                 with torch.no_grad():
                     action_dict = policy.predict_action(obs_dict)
+                    # Track latency if available
+                    if hasattr(policy, '_last_latency_ms'):
+                        all_latencies.append(policy._last_latency_ms)
 
                 # device_transfer
                 np_action_dict = dict_apply(action_dict,
@@ -248,5 +254,12 @@ class PushTImageRunner(BaseImageRunner):
             name = prefix+'mean_score'
             value = np.mean(value)
             log_data[name] = value
+        
+        # log latency statistics (for fair comparison between FM and DDPM)
+        if len(all_latencies) > 0:
+            latencies = np.array(all_latencies)
+            log_data['inference_latency_ms'] = np.mean(latencies)
+            log_data['inference_latency_p50_ms'] = np.percentile(latencies, 50)
+            log_data['inference_latency_p95_ms'] = np.percentile(latencies, 95)
 
         return log_data

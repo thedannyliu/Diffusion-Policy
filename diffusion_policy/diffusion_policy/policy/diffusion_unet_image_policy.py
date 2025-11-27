@@ -1,4 +1,5 @@
 from typing import Dict
+import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -78,6 +79,9 @@ class DiffusionUnetImagePolicy(BaseImagePolicy):
         if num_inference_steps is None:
             num_inference_steps = noise_scheduler.config.num_train_timesteps
         self.num_inference_steps = num_inference_steps
+        
+        # Track latency for fair comparison with Flow Matching
+        self._last_latency_ms = 0.0
     
     # ========= inference  ============
     def conditional_sample(self, 
@@ -162,13 +166,15 @@ class DiffusionUnetImagePolicy(BaseImagePolicy):
             cond_data[:,:To,Da:] = nobs_features
             cond_mask[:,:To,Da:] = True
 
-        # run sampling
+        # run sampling with timing for fair comparison with Flow Matching
+        start_time = time.time()
         nsample = self.conditional_sample(
             cond_data, 
             cond_mask,
             local_cond=local_cond,
             global_cond=global_cond,
             **self.kwargs)
+        self._last_latency_ms = (time.time() - start_time) * 1000
         
         # unnormalize prediction
         naction_pred = nsample[...,:Da]
