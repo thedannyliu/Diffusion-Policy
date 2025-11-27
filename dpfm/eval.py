@@ -25,6 +25,9 @@ project_dir = pathlib.Path(__file__).parent.parent
 sys.path.insert(0, str(project_dir))
 sys.path.insert(0, str(project_dir / "diffusion_policy"))
 
+# Register eval resolver for OmegaConf
+OmegaConf.register_new_resolver("eval", eval, replace=True)
+
 from diffusion_policy.common.pytorch_util import dict_apply
 
 
@@ -67,21 +70,24 @@ def run_evaluation(
     device: str = 'cuda:0'
 ):
     """Run evaluation and return metrics."""
-    # Get env runner config
-    env_runner_cfg = cfg.task.env_runner
+    # Convert to mutable dict to allow modifications
+    env_runner_cfg = OmegaConf.to_container(cfg.task.env_runner, resolve=True)
     
-    # Override n_test
-    env_runner_cfg.n_test = n_test
-    env_runner_cfg.n_test_vis = min(4, n_test)
-    env_runner_cfg.n_train = 0
-    env_runner_cfg.n_train_vis = 0
+    # Override settings
+    env_runner_cfg['n_test'] = n_test
+    env_runner_cfg['n_test_vis'] = min(4, n_test)
+    env_runner_cfg['n_train'] = 0
+    env_runner_cfg['n_train_vis'] = 0
     
     # Set output dir
     if output_dir is None:
         output_dir = pathlib.Path('.').joinpath('eval_output')
     output_dir = pathlib.Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    env_runner_cfg.output_dir = str(output_dir)
+    env_runner_cfg['output_dir'] = str(output_dir)
+    
+    # Convert back to OmegaConf for instantiation
+    env_runner_cfg = OmegaConf.create(env_runner_cfg)
     
     # Create env runner
     env_runner = hydra.utils.instantiate(env_runner_cfg)
