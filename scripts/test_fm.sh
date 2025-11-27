@@ -30,14 +30,24 @@ mkdir -p ${PROJECT_DIR}/logs
 source ~/.bashrc
 conda activate DPFM
 
-# Install missing packages - more verbose to debug
+# Install missing packages - following the correct order for gym 0.21
 echo ""
 echo "=== Installing Dependencies ==="
-pip install pandas scikit-image numba av pygame pymunk shapely opencv-python-headless zarr
-pip install "numpy<2"
-pip install setuptools==65.5.0
-pip install "gym==0.21.0"
-pip list | grep -E "gym|numpy|pandas"
+
+# First: downgrade setuptools and wheel for gym 0.21 compatibility
+pip install setuptools==65.5.0 wheel==0.38.4 --quiet
+
+# Install gym 0.21 now that setuptools is compatible
+pip install gym==0.21.0 --quiet
+
+# Downgrade numpy for torch compatibility
+pip install "numpy<2" --quiet
+
+# Install other dependencies
+pip install pandas scikit-image numba av pygame pymunk shapely opencv-python-headless zarr --quiet
+
+echo "Installed packages:"
+pip list | grep -E "gym|numpy|pandas|setuptools|wheel"
 
 # Show environment info
 echo ""
