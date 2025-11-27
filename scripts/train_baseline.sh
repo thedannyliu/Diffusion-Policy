@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=128G
+#SBATCH --mem=64G
 #SBATCH --gres=gpu:1
 #SBATCH --time=24:00:00
 #SBATCH --partition=gpu-l40s
@@ -30,23 +30,26 @@ mkdir -p ${PROJECT_DIR}/logs
 source ~/.bashrc
 conda activate DPFM
 
+# Fix package issues  
+pip install numpy==1.24.0 --quiet
+pip install gym==0.22.0 --quiet
+
 # Environment info
 nvidia-smi
 
 # Set paths
 export PYTHONPATH="${PROJECT_DIR}:${PROJECT_DIR}/diffusion_policy:${PYTHONPATH}"
+export HYDRA_FULL_ERROR=1
 
 # Training (using original DP)
 cd ${PROJECT_DIR}/diffusion_policy
 
 python train.py \
-    --config-name=train_diffusion_unet_image_workspace \
-    task=pusht_image \
+    --config-name=image_pusht_diffusion_policy_cnn \
     training.seed=42 \
     training.device=cuda:0 \
-    exp_name=ddpm_baseline_seed42 \
-    logging.mode=online \
-    logging.project=dpfm_pusht \
-    hydra.run.dir='${PROJECT_DIR}/data/outputs/ddpm_baseline_seed42'
+    training.num_epochs=200 \
+    logging.mode=offline \
+    hydra.run.dir=data/outputs/ddpm_baseline_\${now:%Y.%m.%d-%H.%M.%S}
 
 echo "End time: $(date)"
