@@ -11,6 +11,7 @@
 #SBATCH --partition=gpu-l40s
 #SBATCH --account=gts-agarg35-ideas_l40s
 #SBATCH --qos=inferno
+#SBATCH --exclude=atl1-1-03-004-31-0
 
 # === Flow Matching Hybrid Training Script ===
 # Aligned with original paper settings (3050 epochs, 84x84 crop, hybrid policy)
