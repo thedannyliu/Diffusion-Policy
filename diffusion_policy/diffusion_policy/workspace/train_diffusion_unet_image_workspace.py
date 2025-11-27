@@ -19,6 +19,7 @@ import wandb
 import tqdm
 import numpy as np
 import shutil
+from typing import Optional
 from diffusion_policy.workspace.base_workspace import BaseWorkspace
 from diffusion_policy.policy.diffusion_unet_image_policy import DiffusionUnetImagePolicy
 from diffusion_policy.dataset.base_dataset import BaseImageDataset
@@ -104,11 +105,13 @@ class TrainDiffusionUnetImageWorkspace(BaseWorkspace):
                 model=self.ema_model)
 
         # configure env
-        env_runner: BaseImageRunner
-        env_runner = hydra.utils.instantiate(
-            cfg.task.env_runner,
-            output_dir=self.output_dir)
-        assert isinstance(env_runner, BaseImageRunner)
+        # For real robot training, env_runner can be None (no simulation rollout)
+        env_runner: Optional[BaseImageRunner] = None
+        if cfg.task.env_runner is not None:
+            env_runner = hydra.utils.instantiate(
+                cfg.task.env_runner,
+                output_dir=self.output_dir)
+            assert isinstance(env_runner, BaseImageRunner)
 
         # configure logging
         wandb_run = wandb.init(
@@ -214,8 +217,8 @@ class TrainDiffusionUnetImageWorkspace(BaseWorkspace):
                     policy = self.ema_model
                 policy.eval()
 
-                # run rollout
-                if (self.epoch % cfg.training.rollout_every) == 0:
+                # run rollout (skip if no env_runner for real robot)
+                if env_runner is not None and (self.epoch % cfg.training.rollout_every) == 0:
                     runner_log = env_runner.run(policy)
                     # log all
                     step_log.update(runner_log)

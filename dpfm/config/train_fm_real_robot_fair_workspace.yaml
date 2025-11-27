@@ -1,0 +1,159 @@
+# Flow Matching for Real Robot - FAIR COMPARISON version
+# Uses the SAME obs encoder as DDPM baseline (MultiImageObsEncoder)
+# This ensures fair comparison between FM and DDPM
+
+defaults:
+  - _self_
+  - task: real_robot_image
+
+name: train_fm_real_robot_fair
+_target_: dpfm.workspace.train_fm_unet_image_workspace.TrainFlowMatchingUnetImageWorkspace
+
+exp_name: default
+task_name: ${task.name}
+
+# === Key Settings (SAME as DDPM baseline) ===
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+obs_as_global_cond: true
+past_action_visible: false
+keypoint_visible_rate: 1.0
+dataset_obs_steps: ${n_obs_steps}
+
+# === Shape Meta (from task config) ===
+shape_meta: ${task.shape_meta}
+
+# === Flow Matching Policy with MultiImageObsEncoder (SAME as DDPM) ===
+policy:
+  _target_: dpfm.policy.flow_matching_unet_image_policy.FlowMatchingUnetImagePolicy
+  
+  shape_meta: ${shape_meta}
+  
+  # Flow Matching specific
+  num_inference_steps: 4
+  sigma_min: 0.0
+  
+  # Observation encoder - SAME as DDPM baseline
+  obs_encoder:
+    _target_: diffusion_policy.model.vision.multi_image_obs_encoder.MultiImageObsEncoder
+    shape_meta: ${shape_meta}
+    rgb_model:
+      _target_: diffusion_policy.model.vision.model_getter.get_resnet
+      name: resnet18
+      weights: null
+    resize_shape: [240, 320]
+    crop_shape: [216, 288]  # 90% of 240x320
+    random_crop: true
+    use_group_norm: true
+    share_rgb_model: false
+    imagenet_norm: true
+
+  # Action horizon and observation settings
+  horizon: ${horizon}
+  n_action_steps: ${eval:'${n_action_steps}+${n_latency_steps}'}
+  n_obs_steps: ${n_obs_steps}
+  obs_as_global_cond: ${obs_as_global_cond}
+  
+  # UNet architecture - SAME as DDPM baseline
+  diffusion_step_embed_dim: 128
+  down_dims: [512, 1024, 2048]
+  kernel_size: 5
+  n_groups: 8
+  cond_predict_scale: true
+
+# === Optimizer - SAME as DDPM ===
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+# === EMA - SAME as DDPM ===
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+# === Training - SAME as DDPM ===
+training:
+  device: cuda:0
+  seed: 42
+  debug: false
+  resume: true
+  
+  num_epochs: 600
+  gradient_accumulate_every: 1
+  
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  
+  use_ema: true
+  freeze_encoder: false
+  
+  # No rollout for real robot
+  rollout_every: 1000000
+  checkpoint_every: 50
+  val_every: 1
+  sample_every: 5
+  
+  max_train_steps: null
+  max_val_steps: null
+  tqdm_interval_sec: 1.0
+
+# === DataLoader - SAME as DDPM ===
+dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: true
+  pin_memory: true
+  persistent_workers: false
+
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: false
+  pin_memory: true
+  persistent_workers: false
+
+# === Checkpointing ===
+checkpoint:
+  topk:
+    monitor_key: train_loss
+    mode: min
+    k: 5
+    format_str: 'epoch={epoch:04d}-train_loss={train_loss:.3f}.ckpt'
+  save_last_ckpt: true
+  save_last_snapshot: false
+
+# === Logging ===
+logging:
+  project: dpfm_real_robot
+  group: ${exp_name}
+  name: '${task_name}_fm_fair_step${policy.num_inference_steps}_seed${training.seed}'
+  resume: true
+  mode: online
+  tags:
+    - fair_comparison
+    - flow_matching
+    - ${task_name}
+    - steps_${policy.num_inference_steps}
+    - seed_${training.seed}
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  wandb_name_base: '${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}'
+
+hydra:
+  job:
+    chdir: true
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    subdir: ${hydra.job.num}
