@@ -1,0 +1,144 @@
+# Training configuration for Flow Matching with 4 Euler steps (Push-T Image)
+# This is the primary experiment configuration
+
+defaults:
+  - _self_
+  - task: pusht_image
+
+name: train_fm_unet_image
+_target_: dpfm.workspace.train_fm_unet_image_workspace.TrainFlowMatchingUnetImageWorkspace
+
+task_name: ${task.name}
+shape_meta: ${task.shape_meta}
+exp_name: "fm_4step"
+
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+dataset_obs_steps: ${n_obs_steps}
+past_action_visible: False
+keypoint_visible_rate: 1.0
+obs_as_global_cond: True
+
+policy:
+  _target_: dpfm.policy.flow_matching_unet_image_policy.FlowMatchingUnetImagePolicy
+
+  shape_meta: ${shape_meta}
+  
+  # Flow Matching specific parameters
+  num_inference_steps: 4  # 4 Euler steps (vs 100 DDPM steps)
+  sigma_min: 0.0          # No added noise (pure OT path)
+  
+  # Observation encoder (same as DDPM baseline)
+  obs_encoder:
+    _target_: diffusion_policy.model.vision.multi_image_obs_encoder.MultiImageObsEncoder
+    shape_meta: ${shape_meta}
+    rgb_model:
+      _target_: diffusion_policy.model.vision.model_getter.get_resnet
+      name: resnet18
+      weights: null
+    resize_shape: null
+    crop_shape: [76, 76]
+    random_crop: True
+    use_group_norm: True
+    share_rgb_model: False
+    imagenet_norm: True
+
+  # Action horizon and observation settings (same as DDPM)
+  horizon: ${horizon}
+  n_action_steps: ${eval:'${n_action_steps}+${n_latency_steps}'}
+  n_obs_steps: ${n_obs_steps}
+  obs_as_global_cond: ${obs_as_global_cond}
+  
+  # UNet architecture (same as DDPM baseline)
+  diffusion_step_embed_dim: 128
+  down_dims: [512, 1024, 2048]
+  kernel_size: 5
+  n_groups: 8
+  cond_predict_scale: True
+
+# EMA settings (same as DDPM)
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+# Dataloader settings (same as DDPM)
+dataloader:
+  batch_size: 64
+  num_workers: 4
+  shuffle: True
+  pin_memory: True
+  persistent_workers: False
+
+val_dataloader:
+  batch_size: 64
+  num_workers: 4
+  shuffle: False
+  pin_memory: True
+  persistent_workers: False
+
+# Optimizer (same as DDPM)
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+# Training settings (same as DDPM)
+training:
+  device: "cuda:0"
+  seed: 42
+  debug: False
+  resume: True
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  num_epochs: 8000
+  gradient_accumulate_every: 1
+  use_ema: True
+  freeze_encoder: False
+  rollout_every: 50
+  checkpoint_every: 50
+  val_every: 1
+  sample_every: 5
+  max_train_steps: null
+  max_val_steps: null
+  tqdm_interval_sec: 1.0
+
+# Logging
+logging:
+  project: dpfm_pusht
+  resume: True
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}_${exp_name}
+  tags: ["${name}", "${task_name}", "${exp_name}", "flow_matching"]
+  id: null
+  group: null
+
+# Checkpointing
+checkpoint:
+  topk:
+    monitor_key: test_mean_score
+    mode: max
+    k: 5
+    format_str: 'epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt'
+  save_last_ckpt: True
+  save_last_snapshot: False
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}_${exp_name}
+  wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}_${exp_name}
+
+hydra:
+  job:
+    override_dirname: ${name}
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}_${exp_name}
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}_${exp_name}
+    subdir: ${hydra.job.num}
