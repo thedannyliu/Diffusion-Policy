@@ -1,19 +1,26 @@
 #!/bin/bash
 #SBATCH --job-name=dpfm_eval
-#SBATCH --account=gts-agarg35-ideas_l40s
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:L40s:1
 #SBATCH --time=2:00:00
 #SBATCH --partition=gpu-l40s
+#SBATCH --account=gts-agarg35
+#SBATCH --qos=inferno
 #SBATCH --output=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval_%j.out
 #SBATCH --error=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval_%j.err
 
 # ============================================================
 # Evaluate Flow Matching and DDPM policies
 # ============================================================
+# Usage:
+#   sbatch scripts/eval.sh                                  # Evaluate both
+#   sbatch scripts/eval.sh /path/to/checkpoint.ckpt output_dir  # Evaluate specific checkpoint
+
+CHECKPOINT="${1:-}"
+OUTPUT_DIR="${2:-results/eval}"
 
 echo "=== DPFM Evaluation ==="
 echo "Job ID: $SLURM_JOB_ID"
@@ -28,10 +35,6 @@ mkdir -p ${PROJECT_DIR}/logs
 source ~/.bashrc
 conda activate DPFM
 
-# Verify packages
-python -c "import numpy; assert numpy.__version__.startswith('1.24'), 'numpy version mismatch'" || pip install numpy==1.24.0 --quiet
-python -c "import gym" || pip install gym==0.22.0 --quiet
-
 # Environment info
 nvidia-smi
 
@@ -39,41 +42,27 @@ nvidia-smi
 export PYTHONPATH="${PROJECT_DIR}:${PROJECT_DIR}/diffusion_policy:${PYTHONPATH}"
 export HYDRA_FULL_ERROR=1
 
-cd ${PROJECT_DIR}
+cd ${PROJECT_DIR}/diffusion_policy
 
-# Checkpoints
-FM_CKPT="diffusion_policy/diffusion_policy/data/outputs/fm_4step_2025.11.26-23.29.05/checkpoints/latest.ckpt"
-BASELINE_CKPT="diffusion_policy/data/outputs/ddpm_baseline_2025.11.26-23.31.42/checkpoints/latest.ckpt"
+# If specific checkpoint provided, evaluate only that
+if [ -n "$CHECKPOINT" ]; then
+    echo ""
+    echo "=========================================="
+    echo "Evaluating: $CHECKPOINT"
+    echo "=========================================="
+    python -m dpfm.eval \
+        --checkpoint "${CHECKPOINT}" \
+        --output_dir "${OUTPUT_DIR}" \
+        --n_test 50 \
+        --device cuda:0
+else
+    # Evaluate all checkpoints in results
+    echo "No specific checkpoint provided."
+    echo "Please provide checkpoint path: sbatch scripts/eval.sh /path/to/checkpoint.ckpt output_dir"
+fi
 
-# Evaluate FM 4-step
-echo ""
-echo "=========================================="
-echo "Evaluating Flow Matching (4-step)"
-echo "=========================================="
-python -m dpfm.eval \
-    --checkpoint "${FM_CKPT}" \
-    --output_dir "results/eval_fm_4step" \
-    --n_test 50 \
-    --device cuda:0
-
-# Evaluate Baseline DDPM
-echo ""
-echo "=========================================="
-echo "Evaluating DDPM Baseline (100-step)"
-echo "=========================================="
-python -m dpfm.eval \
-    --checkpoint "${BASELINE_CKPT}" \
-    --output_dir "results/eval_baseline" \
-    --n_test 50 \
-    --device cuda:0
-
-# Summary
 echo ""
 echo "=========================================="
 echo "Evaluation Complete"
 echo "=========================================="
-echo "FM Results: results/eval_fm_4step/eval_results.json"
-echo "Baseline Results: results/eval_baseline/eval_results.json"
-
-echo ""
 echo "End time: $(date)"

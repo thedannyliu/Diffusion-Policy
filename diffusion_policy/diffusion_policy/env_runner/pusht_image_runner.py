@@ -205,9 +205,9 @@ class PushTImageRunner(BaseImageRunner):
                     if hasattr(policy, '_last_latency_ms'):
                         all_latencies.append(policy._last_latency_ms)
 
-                # device_transfer
+                # device_transfer - only convert tensors, skip floats like latency_ms
                 np_action_dict = dict_apply(action_dict,
-                    lambda x: x.detach().to('cpu').numpy())
+                    lambda x: x.detach().to('cpu').numpy() if torch.is_tensor(x) else x)
 
                 action = np_action_dict['action']
 

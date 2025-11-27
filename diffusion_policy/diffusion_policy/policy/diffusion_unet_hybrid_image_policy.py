@@ -1,5 +1,6 @@
 from typing import Dict
 import math
+import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -167,6 +168,9 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         if num_inference_steps is None:
             num_inference_steps = noise_scheduler.config.num_train_timesteps
         self.num_inference_steps = num_inference_steps
+        
+        # Latency tracking for fair comparison
+        self._last_latency_ms = 0.0
 
         print("Diffusion params: %e" % sum(p.numel() for p in self.model.parameters()))
         print("Vision params: %e" % sum(p.numel() for p in self.obs_encoder.parameters()))
@@ -216,6 +220,11 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         """
         obs_dict: must include "obs" key
         result: must include "action" key
+        
+        Latency is measured for the diffusion sampling step ONLY, excluding:
+        - Observation encoding
+        - Normalization/unnormalization  
+        - CPU-GPU sync for latency measurement
         """
         assert 'past_action' not in obs_dict # not implemented yet
         # normalize input
@@ -231,7 +240,7 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         device = self.device
         dtype = self.dtype
 
-        # handle different ways of passing observation
+        # handle different ways of passing observation - NOT included in latency
         local_cond = None
         global_cond = None
         if self.obs_as_global_cond:
@@ -254,6 +263,11 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
             cond_data[:,:To,Da:] = nobs_features
             cond_mask[:,:To,Da:] = True
 
+        # === LATENCY MEASUREMENT: Diffusion Sampling Only ===
+        if device.type == 'cuda':
+            torch.cuda.synchronize()
+        start_time = time.perf_counter()
+        
         # run sampling
         nsample = self.conditional_sample(
             cond_data, 
@@ -261,6 +275,11 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
             local_cond=local_cond,
             global_cond=global_cond,
             **self.kwargs)
+        
+        if device.type == 'cuda':
+            torch.cuda.synchronize()
+        self._last_latency_ms = (time.perf_counter() - start_time) * 1000
+        # === END LATENCY MEASUREMENT ===
         
         # unnormalize prediction
         naction_pred = nsample[...,:Da]
@@ -273,7 +292,8 @@ class DiffusionUnetHybridImagePolicy(BaseImagePolicy):
         
         result = {
             'action': action,
-            'action_pred': action_pred
+            'action_pred': action_pred,
+            'latency_ms': self._last_latency_ms
         }
         return result
 
