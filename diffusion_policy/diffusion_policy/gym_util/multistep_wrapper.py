@@ -92,9 +92,12 @@ class MultiStepWrapper(gym.Wrapper):
         self.done = list()
         self.info = defaultdict(lambda : deque(maxlen=n_obs_steps+1))
     
-    def reset(self):
+    def reset(self, **kwargs):
         """Resets the environment using kwargs."""
-        obs = super().reset()
+        # Filter out gymnasium-specific kwargs
+        kwargs.pop('seed', None)
+        kwargs.pop('options', None)
+        obs = self.env.reset(**kwargs)
 
         self.obs = deque([obs], maxlen=self.n_obs_steps+1)
         self.reward = list()
@@ -166,3 +169,9 @@ class MultiStepWrapper(gym.Wrapper):
         for k, v in self.info.items():
             result[k] = list(v)
         return result
+    
+    def seed(self, seed=None):
+        """Set seed for the underlying environment."""
+        if hasattr(self.env, 'seed'):
+            return self.env.seed(seed)
+        return None

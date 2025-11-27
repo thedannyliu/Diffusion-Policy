@@ -193,7 +193,7 @@ class FlowMatchingUnetImagePolicy(BaseImagePolicy):
         result = {
             'action': action,
             'action_pred': action_pred,
-            'latency_ms': latency_ms  # Extra info for evaluation
+            # Note: latency_ms stored separately to avoid issues with dict_apply in env runner
         }
         return result
 

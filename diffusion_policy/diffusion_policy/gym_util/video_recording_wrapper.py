@@ -30,7 +30,10 @@ class VideoRecordingWrapper(gym.Wrapper):
         self.step_count = 0
 
     def reset(self, **kwargs):
-        obs = super().reset(**kwargs)
+        # Filter out gymnasium-specific kwargs that old gym envs don't understand
+        kwargs.pop('seed', None)
+        kwargs.pop('options', None)
+        obs = self.env.reset(**kwargs)
         self.frames = list()
         self.step_count = 1
         self.video_recoder.stop()
