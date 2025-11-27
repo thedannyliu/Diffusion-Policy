@@ -27,6 +27,7 @@ sys.path.insert(0, str(project_dir / "diffusion_policy"))
 
 # Register eval resolver for OmegaConf
 OmegaConf.register_new_resolver("eval", eval, replace=True)
+OmegaConf.register_new_resolver("now", lambda pattern: "", replace=True)  # Dummy for now resolver
 
 from diffusion_policy.common.pytorch_util import dict_apply
 
