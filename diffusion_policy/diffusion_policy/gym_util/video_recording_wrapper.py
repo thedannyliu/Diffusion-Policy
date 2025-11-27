@@ -1,4 +1,9 @@
-import gym
+# Gymnasium/gym compatibility layer
+try:
+    import gymnasium as gym
+except ImportError:
+    import gym
+
 import numpy as np
 from diffusion_policy.real_world.video_recorder import VideoRecorder
 

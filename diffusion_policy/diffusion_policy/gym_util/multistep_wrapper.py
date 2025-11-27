@@ -1,5 +1,11 @@
-import gym
-from gym import spaces
+# Gymnasium/gym compatibility layer
+try:
+    import gymnasium as gym
+    from gymnasium import spaces
+except ImportError:
+    import gym
+    from gym import spaces
+
 import numpy as np
 from collections import defaultdict, deque
 import dill

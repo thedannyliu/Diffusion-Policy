@@ -30,6 +30,15 @@ mkdir -p ${PROJECT_DIR}/logs
 source ~/.bashrc
 conda activate DPFM
 
+# Install missing packages - more verbose to debug
+echo ""
+echo "=== Installing Dependencies ==="
+pip install pandas scikit-image numba av pygame pymunk shapely opencv-python-headless zarr
+pip install "numpy<2"
+pip install setuptools==65.5.0
+pip install "gym==0.21.0"
+pip list | grep -E "gym|numpy|pandas"
+
 # Show environment info
 echo ""
 echo "=== Environment Info ==="
@@ -75,12 +84,13 @@ print('✓ All imports successful!')
 # Run a quick training test with debug mode
 echo ""
 echo "=== Running Training Test (Debug Mode) ==="
+export HYDRA_FULL_ERROR=1
 python -m dpfm.train \
     --config-name=train_fm_unet_image_workspace \
     training.debug=True \
     training.device=cuda:0 \
     logging.mode=offline \
-    hydra.run.dir='${PROJECT_DIR}/data/outputs/test_run'
+    hydra.run.dir=data/outputs/test_run
 
 echo ""
 echo "=== Job Completed ==="
