@@ -1,6 +1,6 @@
 # Diffusion Policy with Flow Matching (DPFM)
 
-> **CS 7643 Deep Learning Final Project**: Extending Diffusion Policy with Flow Matching for Faster Inference
+> **CS 8803 Deep Reinforcement Learning Final Project**: Extending Diffusion Policy with Flow Matching for Faster Inference
 
 ## 🎯 Project Overview
 
@@ -274,7 +274,7 @@ python -m dpfm.train --config-name=train_fm_unet_hybrid_image_workspace
 
 ## 📄 License
 
-This project is for educational purposes (CS 7643 Final Project).  
+This project is for educational purposes (CS 8803 Final Project).  
 Original Diffusion Policy codebase is under MIT License.
 
 ---
@@ -282,4 +282,4 @@ Original Diffusion Policy codebase is under MIT License.
 ## 🙏 Acknowledgments
 
 - [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) authors
-- CS 7643 Deep Learning course staff at Georgia Tech
+- CS 8803 Deep Reinforcement Learning course staff at Georgia Tech
