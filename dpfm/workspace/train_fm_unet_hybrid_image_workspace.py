@@ -175,11 +175,13 @@ class TrainFlowMatchingUnetHybridImageWorkspace(BaseWorkspace):
                 model=self.ema_model)
 
         # Configure environment runner (same as DDPM)
-        env_runner: BaseImageRunner
-        env_runner = hydra.utils.instantiate(
-            cfg.task.env_runner,
-            output_dir=self.output_dir)
-        assert isinstance(env_runner, BaseImageRunner)
+        # For real robot training, env_runner can be None (no simulation rollout)
+        env_runner: Optional[BaseImageRunner] = None
+        if cfg.task.env_runner is not None:
+            env_runner = hydra.utils.instantiate(
+                cfg.task.env_runner,
+                output_dir=self.output_dir)
+            assert isinstance(env_runner, BaseImageRunner)
 
         # Configure logging (WandB online mode)
         wandb_run = wandb.init(
@@ -297,8 +299,8 @@ class TrainFlowMatchingUnetHybridImageWorkspace(BaseWorkspace):
                     policy = self.ema_model
                 policy.eval()
 
-                # Rollout evaluation
-                if (self.epoch % cfg.training.rollout_every) == 0:
+                # Rollout evaluation (skip if no env_runner for real robot)
+                if env_runner is not None and (self.epoch % cfg.training.rollout_every) == 0:
                     runner_log = env_runner.run(policy)
                     step_log.update(runner_log)
                     
