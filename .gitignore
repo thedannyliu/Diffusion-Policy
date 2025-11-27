@@ -178,3 +178,8 @@ image/
 tmp/
 temp/
 *.tmp
+
+# Additional project directories (not for version control)
+docs/
+scripts/
+logs/
