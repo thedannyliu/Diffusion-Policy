@@ -577,15 +577,20 @@ To make the jerk metric physically meaningful and directly comparable to the bas
 | Day | Date | Tasks |
 |-----|------|-------|
 | 1 | Nov 26 | ✅ Setup repo, env, clone DP, create plan |
-| 2 | Nov 27 | Implement FM loss & sampler, create FM policy |
-| 3 | Nov 28 | Create workspace, configs, start baseline training |
-| 4 | Nov 29 | Debug FM training, run all seeds |
-| 5 | Nov 30 | Evaluation & latency collection |
-| 6 | Dec 1 | Generate figures, write analysis |
-| 7 | Dec 2 | Write report draft |
-| 8 | Dec 3 | Record video presentation |
-| 9 | Dec 4 | Final polish, buffer |
-| 10 | Dec 5 | **Submission** |
+| 1 | Nov 26 | ✅ Implement FM loss & sampler |
+| 1 | Nov 26 | ✅ Create FM policy |
+| 1 | Nov 26 | ✅ Create workspace and configs |
+| 1 | Nov 26 | ✅ Fix gym/gymnasium/pymunk compatibility issues |
+| 1 | Nov 26 | ✅ Verify training runs end-to-end (debug mode) |
+| 1 | Nov 26 | ✅ Submit FM 4-step + DDPM baseline training jobs |
+| 2 | Nov 27 | Monitor training, debug issues if any |
+| 3 | Nov 28 | Run all seeds, start evaluation |
+| 4 | Nov 29 | Evaluation & latency collection |
+| 5 | Nov 30 | Generate figures, write analysis |
+| 6 | Dec 1 | Write report draft |
+| 7 | Dec 2 | Record video presentation |
+| 8 | Dec 3 | Final polish, buffer |
+| 9 | Dec 4 | **Submission** |
 
 ---
 
