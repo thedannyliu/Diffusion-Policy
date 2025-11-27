@@ -29,9 +29,9 @@ mkdir -p ${PROJECT_DIR}/logs
 source ~/.bashrc
 conda activate DPFM
 
-# Fix package issues  
-pip install numpy==1.24.0 --quiet
-pip install gym==0.22.0 --quiet
+# Verify packages (don't reinstall if already correct)
+python -c "import numpy; assert numpy.__version__.startswith('1.24'), 'numpy version mismatch'" || pip install numpy==1.24.0 --quiet
+python -c "import gym" || pip install gym==0.22.0 --quiet
 
 # Environment info
 nvidia-smi
@@ -44,7 +44,8 @@ export HYDRA_FULL_ERROR=1
 cd ${PROJECT_DIR}/diffusion_policy
 
 python train.py \
-    --config-name=image_pusht_diffusion_policy_cnn \
+    --config-name=train_diffusion_unet_image_workspace \
+    task=pusht_image \
     training.seed=42 \
     training.device=cuda:0 \
     training.num_epochs=200 \
