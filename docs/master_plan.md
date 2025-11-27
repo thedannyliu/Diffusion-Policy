@@ -64,20 +64,24 @@ Flow Matching provides an alternative generative framework:
 
 ### 2.3 Mathematical Formulation
 
-**DDPM (current)**:
+**DDPM (current, original Diffusion Policy)**:
 ```
 Forward: x_t = √(α_t) * x_0 + √(1-α_t) * ε
 Loss: L = ||ε_θ(x_t, t) - ε||²
 Inference: x_{t-1} = f(x_t, ε_θ(x_t, t))  [100 steps]
 ```
 
-**Flow Matching (proposed)**:
+**Flow Matching / Rectified Flow-style (proposed)**:
 ```
 Interpolation: x_t = t * x_1 + (1-t) * x_0  [x_1 = data, x_0 = noise]
 Target velocity: u_t = x_1 - x_0
-Loss: L = ||v_θ(x_t, t) - u_t||²
+Loss: L = ||v_θ(x_t, t, obs) - u_t||²
 Inference: x_1 = x_0 + Σ v_θ(x_t, t) * Δt  [1-4 steps]
 ```
+
+**Design note (literature alignment)**:
+- This objective corresponds to the *linear optimal-transport path* often used in **Rectified Flow** (Liu et al., 2023) and **Flow Matching** variants: we transport a standard Gaussian `x_0 ~ N(0, I)` to the data `x_1` along a straight line in data space.  
+- We intentionally use the *simplified* version without explicit density correction terms or path reweighting to keep the modification to Diffusion Policy minimal and stable for RL control. The comparison to DDPM is therefore: *same UNet, same conditioning, same data distribution, only the training objective and sampler change*.
 
 ---
 
@@ -89,7 +93,7 @@ Inference: x_1 = x_0 + Σ v_θ(x_t, t) * Δt  [1-4 steps]
 |-----------|------|--------|
 | Visual Encoder | `multi_image_obs_encoder.py` | Isolate the experiment variable |
 | UNet Backbone | `conditional_unet1d.py` | Same architecture, different objective |
-| Data Pipeline | `robomimic_replay_image_dataset.py` | Same data for fair comparison |
+| Data Pipeline | `pusht_image_dataset.py` | Same data and preprocessing as original DP Push-T |
 | Normalizer | `normalizer.py` | Same preprocessing |
 
 ### 3.2 What We Modify
@@ -100,88 +104,78 @@ Inference: x_1 = x_0 + Σ v_θ(x_t, t) * Δt  [1-4 steps]
 | Sampling | DDPM reverse diffusion (100 steps) | Euler ODE integration (1-4 steps) |
 | Time Embedding | Discrete timesteps | Continuous t ∈ [0, 1] |
 
+For fairness to the original paper and codebase:
+- **Environment, dataset, and observation space**: identical to the official Push-T image setting in Diffusion Policy (same zarr dataset, same image resolution, same history length).
+- **Model architecture**: we reuse `ConditionalUnet1D` with the same `down_dims`, kernel size, group norm, and visual encoder (`MultiImageObsEncoder`).
+- **Training pipeline**: we keep the same optimizer, batch size, learning rate schedule, EMA, and rollout/evaluation schedule as `TrainDiffusionUnetImageWorkspace`; only the policy type and its loss/sampling internals differ.
+
 ### 3.3 Flow Matching Loss Implementation
 
-```python
-def flow_matching_loss(model, obs, action, obs_encoder):
-    """
-    Compute Flow Matching loss for action diffusion.
-    
-    Args:
-        model: ConditionalUnet1D that outputs velocity
-        obs: Observation dict with images
-        action: Ground truth action sequence [B, T, Da]
-        obs_encoder: Visual encoder for conditioning
-    
-    Returns:
-        loss: MSE loss between predicted and target velocity
-    """
-    batch_size = action.shape[0]
-    device = action.device
-    
-    # 1. Sample random time t ~ U(0, 1)
-    t = torch.rand(batch_size, device=device)
-    
-    # 2. Sample noise x_0 ~ N(0, I)
-    x_0 = torch.randn_like(action)
-    
-    # 3. Interpolate: x_t = t * action + (1-t) * x_0
-    #    Note: t=1 is data, t=0 is noise
-    t_expand = t.view(batch_size, 1, 1)
-    x_t = t_expand * action + (1 - t_expand) * x_0
-    
-    # 4. Target velocity: u_t = action - x_0 (constant along path)
-    u_t = action - x_0
-    
-    # 5. Encode observations
-    obs_features = obs_encoder(obs)
-    global_cond = obs_features.reshape(batch_size, -1)
-    
-    # 6. Predict velocity: v_θ(x_t, t, obs)
-    v_pred = model(x_t, t, global_cond=global_cond)
-    
-    # 7. MSE Loss
-    loss = F.mse_loss(v_pred, u_t)
-    
-    return loss
-```
+We implement Flow Matching as a *Rectified Flow-style* loss that is compatible with the existing Diffusion Policy training structure:
+
+- Input to the loss:
+  - `model`: the same `ConditionalUnet1D` used in DDPM.  
+  - `x_1`: **normalized** action sequences `[B, T, D]` (same normalization as DDPM, via `LinearNormalizer`).  
+  - `global_cond`: observation features `[B, cond_dim]` obtained with `MultiImageObsEncoder` in exactly the same way as in `DiffusionUnetImagePolicy.compute_loss`.
+
+- Loss definition (pseudo-code):
+  ```python
+  # Sample time and base noise
+  t ~ Uniform(0, 1)          # shape [B]
+  x0 ~ N(0, I)               # same shape as x1
+
+  # Linear OT path (Rectified Flow-style)
+  xt = t * x1 + (1 - t) * x0
+  ut = x1 - x0               # constant velocity along the path
+
+  # Predict velocity with the same UNet architecture
+  v_pred = model(xt, t, global_cond=global_cond)
+
+  # MSE loss
+  L_FM = MSE(v_pred, ut)
+  ```
+
+- Integration with masks:
+  - If an action mask is used (e.g., due to inpainting or varying horizons), we apply the *same* loss mask as DDPM so that only unmasked dimensions contribute to the loss.
+
+This design keeps the **network, conditioning, and normalization identical** to DDPM; only the supervision signal and forward process differ.
 
 ### 3.4 Flow Matching Sampler Implementation
 
+We replace the DDPM reverse sampler with a simple Euler ODE integrator over the learned velocity field:
+
 ```python
-def flow_matching_sample(model, obs_features, action_shape, num_steps=4, device='cuda'):
+def flow_matching_sample(model, global_cond, action_shape, num_steps=4, device='cuda'):
     """
-    Generate action sequence using Euler ODE integration.
-    
+    Generate an action sequence using Euler ODE integration.
+
     Args:
         model: Trained ConditionalUnet1D
-        obs_features: Encoded observation [B, obs_dim]
+        global_cond: Encoded observation [B, cond_dim]
         action_shape: (B, T, Da)
         num_steps: Number of Euler steps (1, 2, 4, 8)
         device: Compute device
-    
+
     Returns:
-        action: Generated action sequence
+        x: Generated (normalized) action sequence
     """
-    batch_size, horizon, action_dim = action_shape
-    
-    # Start from pure noise
-    x = torch.randn(batch_size, horizon, action_dim, device=device)
-    
-    # Time steps: from t=0 (noise) to t=1 (data)
+    B, T, Da = action_shape
+
+    # Start from pure noise (same prior as DDPM)
+    x = torch.randn(B, T, Da, device=device)
+
     dt = 1.0 / num_steps
-    
     for step in range(num_steps):
-        t = torch.full((batch_size,), step * dt, device=device)
-        
-        # Predict velocity
-        v = model(x, t, global_cond=obs_features)
-        
-        # Euler step: x_{t+dt} = x_t + v * dt
+        t = torch.full((B,), step * dt, device=device)
+        v = model(x, t, global_cond=global_cond)
         x = x + v * dt
-    
+
     return x
 ```
+
+The policy wrapper is responsible for:
+- Passing the same `global_cond` as in DDPM.  
+- Unnormalizing the final actions and selecting the correct horizon window (`n_obs_steps`, `n_action_steps`), just as in `DiffusionUnetImagePolicy.predict_action`.
 
 ---
 
@@ -257,12 +251,12 @@ Diffusion-Policy-Flow-Matching/
 
 ```python
 """
-Flow Matching Loss for Diffusion Policy.
+Flow Matching / Rectified Flow-style Loss for Diffusion Policy.
 
 Key differences from DDPM:
 1. Time t is continuous in [0, 1] instead of discrete timesteps
 2. We predict velocity (u_t = x_1 - x_0) instead of noise
-3. Interpolation is linear: x_t = t*x_1 + (1-t)*x_0
+3. Interpolation is linear: x_t = t*x_1 + (1-t)*x_0 (linear OT path)
 """
 
 import torch
@@ -270,9 +264,9 @@ import torch.nn.functional as F
 
 class FlowMatchingLoss:
     """
-    Conditional Flow Matching loss for action sequences.
-    
-    Uses optimal transport path: straight line from noise to data.
+    Conditional Flow Matching / Rectified Flow-style loss for action sequences.
+
+    Uses a linear optimal-transport path: straight line from Gaussian noise to data.
     """
     
     def __init__(self, sigma_min=0.001):
@@ -303,7 +297,7 @@ class FlowMatchingLoss:
         # Sample x_0 from standard Gaussian
         x_0 = torch.randn_like(x_1)
         
-        # Optimal transport interpolation
+        # Linear optimal transport interpolation
         t_expand = t.view(-1, 1, 1)
         x_t = t_expand * x_1 + (1 - t_expand) * x_0
         
@@ -313,7 +307,7 @@ class FlowMatchingLoss:
         # Target velocity (constant along OT path)
         u_t = x_1 - x_0
         
-        # Predict velocity
+        # Predict velocity (same UNet as DDPM)
         v_pred = model(x_t, t, global_cond=global_cond)
         
         # MSE loss
@@ -384,10 +378,30 @@ class EulerSampler:
 
 **File**: `dpfm/policy/flow_matching_unet_image_policy.py`
 
-This will be a modified version of `DiffusionUnetImagePolicy` that:
-1. Uses `FlowMatchingLoss` instead of DDPM noise loss
-2. Uses `EulerSampler` instead of DDPM reverse sampling
-3. Logs latency and jerk metrics
+This will be a modified version of `DiffusionUnetImagePolicy` that preserves the **public interface** and **conditioning structure** but swaps out the generative objective and sampler:
+
+1. **Architecture parity**
+   - Reuse the same `ConditionalUnet1D` and `MultiImageObsEncoder` (same `down_dims`, kernel sizes, etc.) to ensure comparability with the original Diffusion Policy paper.
+   - Keep `obs_as_global_cond=True` and the same `LowdimMaskGenerator` behavior so that the observation/action masking matches the DDPM baseline.
+
+2. **Training (`compute_loss`)**
+   - Normalize observations and actions using the same `LinearNormalizer` as DP.
+   - Encode observations exactly as in `DiffusionUnetImagePolicy.compute_loss` to obtain `global_cond`.
+   - Replace the DDPM forward-diffusion + noise prediction with `FlowMatchingLoss`:
+     - Treat the **normalized actions** `nactions` as `x_1`.
+     - Sample `x_0 ~ N(0, I)` and `t ~ U(0,1)`, build `x_t`, and call the shared UNet with `(x_t, t, global_cond)`.
+     - Compute `MSE(v_pred, x_1 - x_0)`, optionally masked using the same `condition_mask`-derived loss mask as DDPM.
+
+3. **Inference (`predict_action`)**
+   - Keep the same `obs_dict` → `global_cond` pipeline and horizon slicing (`n_obs_steps`, `n_action_steps`).
+   - Replace `conditional_sample` + DDPM scheduler with a call to `EulerSampler.sample`, starting from Gaussian noise in action space with the same shape and using the same `global_cond`.
+   - Unnormalize actions using `self.normalizer['action'].unnormalize`, so that the outputs live in the same control space as the baseline policy.
+
+4. **Latency logging hook**
+   - Wrap sampling in a timer and return `latency_ms` along with actions so that the workspace/env_runner can log percentile latency while sharing the same rollout code as DP.
+
+5. **Fairness guarantee**
+   - From the workspace and env side, both policies expose the same `predict_action` signature and action statistics (mean, std via the same normalizer). Only the loss and sampling internals differ.
 
 ### Phase 2: Training Integration (Day 2-3)
 
@@ -396,9 +410,20 @@ This will be a modified version of `DiffusionUnetImagePolicy` that:
 **File**: `dpfm/workspace/train_fm_unet_image_workspace.py`
 
 Key modifications from `TrainDiffusionUnetImageWorkspace`:
-- Replace `compute_loss` with flow matching loss
-- Add latency logging during validation
-- Add jerk computation for action sequences
+- **Policy instantiation**
+  - Change the policy target from `diffusion_policy.policy.diffusion_unet_image_policy.DiffusionUnetImagePolicy`
+    to `dpfm.policy.flow_matching_unet_image_policy.FlowMatchingUnetImagePolicy`.
+  - Keep all other `cfg.policy` fields (shape_meta, encoder config, UNet hyperparameters, etc.) identical.
+
+- **Training loop**
+  - Reuse the same training loop structure, optimizer, EMA, dataloaders, LR scheduler, and logging/rollout schedule.
+  - The workspace continues to call `model.compute_loss(batch)` and `policy.predict_action(obs_dict)`; the FM policy implements these methods with the Flow Matching objective described in 5.1.3.
+
+- **Latency & jerk logging (evaluation only)**
+  - After each rollout, post-process the recorded **denormalized actions** to compute:
+    - Per-step latency statistics (p50, p95) based on the `latency_ms` returned by the policy or measured externally.
+    - Mean action jerk (see Section 6.5) from the unnormalized action trajectories.
+  - Log these metrics alongside success rate so that DDPM and FM runs go through the same evaluation code paths.
 
 #### 5.2.2 Create Config Files
 
@@ -411,11 +436,6 @@ defaults:
 
 name: train_fm_unet_image
 _target_: dpfm.workspace.train_fm_unet_image_workspace.TrainFMUnetImageWorkspace
-
-# Same architecture as baseline
-horizon: 16
-n_obs_steps: 2
-n_action_steps: 8
 
 policy:
   _target_: dpfm.policy.flow_matching_unet_image_policy.FlowMatchingUnetImagePolicy
@@ -439,6 +459,13 @@ training:
   num_epochs: 8000
   # ...
 ```
+
+**Fairness with respect to DP original config**:
+- The FM configs are cloned from the official Push-T image config used by Diffusion Policy (dataset path, horizon, obs/action history length, optimizer, batch size, LR schedule, EMA, rollout/eval schedule).
+- The only config differences between `baseline_ddpm_pusht.yaml` and `fm_pusht_*.yaml` are:
+  - `policy._target_` (DDPM vs FM implementation)
+  - `policy.sampler` block (DDPM scheduler vs EulerSampler with different `num_steps`)
+  - The experiment `name` and `num_steps` metadata for logging/plotting.
 
 ### Phase 3: Baseline & Experiments (Day 3-5)
 
@@ -516,11 +543,32 @@ For each trained model:
 3. Record: success, latency per step, action trajectory
 4. Compute: mean success, p50/p95 latency, mean jerk
 
+The evaluation script/workspace should:
+- Use the **same env_runner config** and evaluation episode length as the official Diffusion Policy Push-T experiments.
+- Reuse the same seeding and reset behavior so that DDPM and FM differ only in their policy internals, not in environment stochasticity handling.
+
 ### 6.4 Statistical Reporting
 
 - Report mean ± std across seeds
 - Use paired t-test for significance
 - Show confidence intervals in plots
+
+### 6.5 Action Jerk Metric Implementation
+
+To make the jerk metric physically meaningful and directly comparable to the baseline:
+
+- **Signal space**
+  - All jerk computations are done on **denormalized actions** `a_t`, obtained via `self.normalizer['action'].unnormalize(naction_pred)` inside the policy, so that values correspond to the same control units as in the original Diffusion Policy.
+
+- **Definition**
+  - For an action sequence `{a_0, ..., a_{T-1}}` from a rollout, define:
+    - `Δa_t = a_t - a_{t-1}` for `t = 1, ..., T-1`
+    - `jerk_t = ||Δa_t||²`
+  - The reported jerk metric is:
+    - `jerk_mean = (1 / (T-1)) * Σ_{t=1}^{T-1} jerk_t` averaged over all episodes.
+
+- **Implementation location**
+  - Implemented in `dpfm/utils/metrics.py` and called from the FM workspace (and optionally the baseline workspace), so that **both DDPM and FM** use the same post-processing code on their rollout logs.
 
 ---
 
