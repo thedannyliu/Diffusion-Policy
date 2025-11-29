@@ -297,4 +297,4 @@ Educational project for CS 8803. Original Diffusion Policy under MIT License.
 ## 🙏 Acknowledgments
 
 - [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) authors
-- CS 7643 Deep Learning course staff at Georgia Tech
+- CS 8803 Deep Reinforcement Learning course staff at Georgia Tech
