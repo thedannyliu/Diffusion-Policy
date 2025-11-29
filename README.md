@@ -1,6 +1,6 @@
 # Diffusion Policy with Flow Matching (DPFM)
 
-> **CS 7643 Deep Learning Final Project**: Extending Diffusion Policy with Flow Matching for Faster Inference
+> **CS 8803 Deep Reinforcement Learning Final Project**: Extending Diffusion Policy with Flow Matching for Faster Inference
 
 ## 🎯 Project Overview
 
@@ -292,7 +292,7 @@ Higher LR helps with fewer steps but may hurt with more steps.
 
 ## 📄 License
 
-Educational project for CS 7643. Original Diffusion Policy under MIT License.
+Educational project for CS 8803. Original Diffusion Policy under MIT License.
 
 ## 🙏 Acknowledgments
 
