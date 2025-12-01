@@ -31,6 +31,7 @@ import dill
 import hydra
 import pathlib
 import skvideo.io
+import json
 from omegaconf import OmegaConf
 import scipy.spatial.transform as st
 from diffusion_policy.real_world.real_env import RealEnv
@@ -46,6 +47,71 @@ from diffusion_policy.common.cv2_util import get_image_transform
 
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
+
+
+class LatencyTracker:
+    """Track and report inference latency statistics for real robot evaluation."""
+    
+    def __init__(self, policy_type: str = "unknown"):
+        self.policy_type = policy_type
+        self.inference_latencies = []
+        self.obs_latencies = []
+        self.episode_stats = []
+        
+    def record_inference(self, latency: float):
+        self.inference_latencies.append(latency)
+        
+    def record_obs(self, latency: float):
+        self.obs_latencies.append(latency)
+        
+    def end_episode(self, success: bool = None, duration: float = None):
+        """Record end of episode and compute statistics."""
+        if len(self.inference_latencies) > 0:
+            stats = {
+                'inference_mean': np.mean(self.inference_latencies),
+                'inference_std': np.std(self.inference_latencies),
+                'inference_min': np.min(self.inference_latencies),
+                'inference_max': np.max(self.inference_latencies),
+                'obs_mean': np.mean(self.obs_latencies) if self.obs_latencies else 0,
+                'num_steps': len(self.inference_latencies),
+                'success': success,
+                'duration': duration
+            }
+            self.episode_stats.append(stats)
+            print(f"\n{'='*50}")
+            print(f"Episode Latency Summary ({self.policy_type})")
+            print(f"{'='*50}")
+            print(f"Inference: {stats['inference_mean']*1000:.1f} ± {stats['inference_std']*1000:.1f} ms")
+            print(f"  Min: {stats['inference_min']*1000:.1f} ms, Max: {stats['inference_max']*1000:.1f} ms")
+            print(f"Obs latency: {stats['obs_mean']*1000:.1f} ms")
+            print(f"Steps: {stats['num_steps']}")
+            if duration:
+                print(f"Duration: {duration:.1f} s")
+            print(f"{'='*50}\n")
+        # Reset for next episode
+        self.inference_latencies = []
+        self.obs_latencies = []
+        
+    def get_summary(self):
+        """Get overall summary across all episodes."""
+        if not self.episode_stats:
+            return None
+        all_means = [s['inference_mean'] for s in self.episode_stats]
+        return {
+            'policy_type': self.policy_type,
+            'num_episodes': len(self.episode_stats),
+            'overall_mean_latency': np.mean(all_means),
+            'overall_std_latency': np.std(all_means),
+            'episodes': self.episode_stats
+        }
+    
+    def save_stats(self, filepath: str):
+        """Save latency statistics to JSON file."""
+        summary = self.get_summary()
+        if summary:
+            with open(filepath, 'w') as f:
+                json.dump(summary, f, indent=2)
+            print(f"Latency stats saved to: {filepath}")
 
 @click.command()
 @click.option('--input', '-i', required=True, help='Path to checkpoint')
@@ -148,6 +214,15 @@ def main(input, output, robot_ip, match_dataset, match_episode,
     else:
         raise RuntimeError("Unsupported policy type: ", cfg.name)
 
+    # Determine policy type for latency tracking
+    if 'fm' in cfg.name or 'flow' in cfg.name:
+        policy_type = f"FM (steps={getattr(policy, 'num_inference_steps', 'N/A')})"
+    elif 'diffusion' in cfg.name:
+        policy_type = f"DDPM (steps={getattr(policy, 'num_inference_steps', 'N/A')})"
+    else:
+        policy_type = cfg.name
+    latency_tracker = LatencyTracker(policy_type=policy_type)
+    
     # setup experiment
     dt = 1/frequency
 
@@ -306,7 +381,9 @@ def main(input, output, robot_ip, match_dataset, match_episode,
                         print('get_obs')
                         obs = env.get_obs()
                         obs_timestamps = obs['timestamp']
-                        print(f'Obs latency {time.time() - obs_timestamps[-1]}')
+                        obs_latency = time.time() - obs_timestamps[-1]
+                        latency_tracker.record_obs(obs_latency)
+                        print(f'Obs latency {obs_latency:.4f}s')
 
                         # run inference
                         with torch.no_grad():
@@ -318,7 +395,9 @@ def main(input, output, robot_ip, match_dataset, match_episode,
                             result = policy.predict_action(obs_dict)
                             # this action starts from the first obs step
                             action = result['action'][0].detach().to('cpu').numpy()
-                            print('Inference latency:', time.time() - s)
+                            inference_latency = time.time() - s
+                            latency_tracker.record_inference(inference_latency)
+                            print(f'Inference latency: {inference_latency*1000:.1f}ms')
                         
                         # convert policy action to env actions
                         if delta_action:
@@ -386,7 +465,9 @@ def main(input, output, robot_ip, match_dataset, match_episode,
                         if key_stroke == ord('s'):
                             # Stop episode
                             # Hand control back to human
+                            episode_duration = time.monotonic() - t_start
                             env.end_episode()
+                            latency_tracker.end_episode(duration=episode_duration)
                             print('Stopped.')
                             break
 
@@ -414,7 +495,9 @@ def main(input, output, robot_ip, match_dataset, match_episode,
                             term_area_start_timestamp = float('inf')
 
                         if terminate:
+                            episode_duration = time.monotonic() - t_start
                             env.end_episode()
+                            latency_tracker.end_episode(duration=episode_duration)
                             break
 
                         # wait for execution
@@ -424,9 +507,26 @@ def main(input, output, robot_ip, match_dataset, match_episode,
                 except KeyboardInterrupt:
                     print("Interrupted!")
                     # stop robot.
+                    episode_duration = time.monotonic() - t_start
                     env.end_episode()
+                    latency_tracker.end_episode(duration=episode_duration)
                 
                 print("Stopped.")
+        
+        # Save latency statistics at the end
+        latency_stats_path = str(pathlib.Path(output) / 'latency_stats.json')
+        latency_tracker.save_stats(latency_stats_path)
+        
+        # Print final summary
+        summary = latency_tracker.get_summary()
+        if summary:
+            print(f"\n{'='*60}")
+            print(f"FINAL LATENCY SUMMARY: {summary['policy_type']}")
+            print(f"{'='*60}")
+            print(f"Total Episodes: {summary['num_episodes']}")
+            print(f"Average Inference Latency: {summary['overall_mean_latency']*1000:.1f} ± {summary['overall_std_latency']*1000:.1f} ms")
+            print(f"Results saved to: {latency_stats_path}")
+            print(f"{'='*60}")
 
 
 
