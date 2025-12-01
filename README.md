@@ -66,7 +66,6 @@ This project extends [Diffusion Policy](https://diffusion-policy.cs.columbia.edu
 | FM_step4_v1 | 4 | 1e-4 | 42 | 0.812 | 24 ms |
 | FM_step4_v2 | 4 | 2e-4 | 42 | 0.838 | 24 ms |
 | FM_step4 | 4 | 1e-4 | 123 | 0.807 | 24 ms |
-| FM_step8_v2 | 8 | 1e-4 | 42 | 0.821 | 48 ms |
 | FM_step2 | 2 | 1e-4 | 42 | ~0.75 | 12 ms |
 
 **Insights:**
