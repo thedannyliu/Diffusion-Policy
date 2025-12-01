@@ -111,8 +111,6 @@ We ran two rounds of real robot training experiments:
 | Config | `train_fm_real_robot_workspace` | `train_ddpm_real_robot_workspace` |
 | Inference Steps | 4 | 100 |
 | Epochs | 600 | 600 |
-| Time Limit | 12h | 12h |
-| Encoder | HybridImageEncoder | MultiImageObsEncoder |
 
 #### Version 2: Optimized Training (1000 epochs, 24h, step=8, Fair Comparison)
 | Setting | FM (v2) | DDPM (v2) |
@@ -120,8 +118,6 @@ We ran two rounds of real robot training experiments:
 | Config | `train_fm_real_robot_fair_workspace` | `train_ddpm_real_robot_workspace` |
 | Inference Steps | 8 | 100 |
 | Epochs | 1000 | 1000 |
-| Time Limit | 24h | 24h |
-| Encoder | **MultiImageObsEncoder** | **MultiImageObsEncoder** |
 
 **Key Differences (v1 → v2):**
 1. **Fair Encoder**: Both now use identical `MultiImageObsEncoder` (ResNet18)
@@ -137,33 +133,6 @@ We ran two rounds of real robot training experiments:
 | FM | v2 (step=8) | 0.0030 | 0.0020 | ~999/1000 |
 | DDPM | v1 | 0.0008 | 0.0022 | 550/600 |
 | DDPM | v2 | 0.0010 | 0.0005 | ~999/1000 |
-
-### Checkpoint Locations
-
-#### Version 1 (Initial) - FM step=4
-```
-data/outputs/real_robot/2025.11.27/15.58.10_fm_sphere_step4_seed42/checkpoints/
-data/outputs/real_robot/2025.11.27/15.58.10_fm_cube_step4_seed42/checkpoints/
-data/outputs/real_robot/2025.11.27/16.22.11_fm_fair_sphere_step4_seed42/checkpoints/
-data/outputs/real_robot/2025.11.27/16.22.11_fm_fair_cube_step4_seed42/checkpoints/
-```
-
-#### Version 2 (Optimized) - FM step=8
-```
-data/outputs/2025.11.29/00.33.00_train_fm_real_robot_fair_sphere/checkpoints/
-data/outputs/2025.11.29/00.33.54_train_fm_real_robot_fair_cube/checkpoints/
-```
-
-#### DDPM Baselines
-```
-# Version 1
-diffusion_policy/data/outputs/2025.11.27/16.22.09_train_ddpm_real_robot_cube/checkpoints/
-diffusion_policy/data/outputs/2025.11.27/16.33.05_train_ddpm_real_robot_sphere/checkpoints/
-
-# Version 2
-diffusion_policy/data/outputs/2025.11.29/01.33.13_train_ddpm_real_robot_sphere/checkpoints/
-diffusion_policy/data/outputs/2025.11.29/01.44.20_train_ddpm_real_robot_cube/checkpoints/
-```
 
 ### Real Robot Training Insights
 
@@ -336,72 +305,6 @@ If your colleague has already deployed Diffusion Policy on a real robot, deployi
 | Output Format | Action tensor | Action tensor |
 | Normalizer | Same | Same |
 
-#### Modifications Required for FM Deployment
-
-1. **Update `eval_real_robot.py`** to support FM policies:
-
-```python
-# In eval_real_robot.py, add FM handling:
-
-if 'diffusion' in cfg.name:
-    # Original DDPM handling
-    policy = workspace.model
-    if cfg.training.use_ema:
-        policy = workspace.ema_model
-    policy.num_inference_steps = 16  # DDIM inference iterations
-    
-elif 'fm' in cfg.name or 'flow' in cfg.name:
-    # Flow Matching handling (new)
-    policy = workspace.model
-    if hasattr(workspace, 'ema_model') and workspace.ema_model is not None:
-        policy = workspace.ema_model
-    # FM uses fewer steps (already configured in checkpoint)
-    # Optionally override: policy.num_inference_steps = 8
-```
-
-2. **Loading FM Checkpoint**:
-
-```python
-import torch
-import dill
-from dpfm.workspace.train_fm_unet_image_workspace import TrainFlowMatchingUnetImageWorkspace
-
-# Load checkpoint
-payload = torch.load('path/to/fm_checkpoint.ckpt', pickle_module=dill)
-cfg = payload['cfg']
-
-# Instantiate workspace
-workspace = TrainFlowMatchingUnetImageWorkspace(cfg)
-workspace.load_payload(payload)
-
-# Get policy
-policy = workspace.model
-policy.eval().to('cuda')
-```
-
-3. **Action Prediction** (identical interface):
-
-```python
-# Both DDPM and FM use the same interface
-with torch.no_grad():
-    obs_dict = {
-        'camera_0': camera_0_image,  # [1, T, C, H, W]
-        'camera_1': camera_1_image,
-    }
-    result = policy.predict_action(obs_dict)
-    action = result['action']  # [1, n_action_steps, action_dim]
-```
-
-#### Recommended FM Checkpoints for Real Robot
-
-```bash
-# Sphere task - FM step=8 (best)
-data/outputs/2025.11.29/00.33.00_train_fm_real_robot_fair_sphere/checkpoints/latest.ckpt
-
-# Cube task - FM step=8 (best)
-data/outputs/2025.11.29/00.33.54_train_fm_real_robot_fair_cube/checkpoints/latest.ckpt
-```
-
 #### Performance Comparison for Real-Time Control
 
 | Method | Inference Time | Control Loop Rate | Suitability |
@@ -409,61 +312,6 @@ data/outputs/2025.11.29/00.33.54_train_fm_real_robot_fair_cube/checkpoints/lates
 | DDPM (100 steps) | ~650 ms | 1.5 Hz | Slow for dynamic tasks |
 | FM (8 steps) | ~50 ms | **20 Hz** | Good for real-time control |
 | FM (4 steps) | ~25 ms | **40 Hz** | Best for fast reactions |
-
-#### Complete Deployment Example
-
-```python
-#!/usr/bin/env python3
-"""Deploy Flow Matching policy on real robot."""
-
-import torch
-import dill
-import hydra
-from omegaconf import OmegaConf
-
-# Register eval resolver
-OmegaConf.register_new_resolver("eval", eval, replace=True)
-
-def load_fm_policy(checkpoint_path, device='cuda'):
-    """Load FM policy from checkpoint."""
-    payload = torch.load(checkpoint_path, pickle_module=dill)
-    cfg = payload['cfg']
-    
-    # Get workspace class
-    cls = hydra.utils.get_class(cfg._target_)
-    workspace = cls(cfg)
-    workspace.load_payload(payload)
-    
-    # Get policy with EMA if available
-    if hasattr(workspace, 'ema_model') and workspace.ema_model is not None:
-        policy = workspace.ema_model
-    else:
-        policy = workspace.model
-    
-    policy.eval().to(device)
-    return policy, cfg
-
-def predict_action(policy, obs_dict, device='cuda'):
-    """Predict action from observations."""
-    # Move observations to device
-    obs_dict_cuda = {
-        k: v.to(device) if isinstance(v, torch.Tensor) else v 
-        for k, v in obs_dict.items()
-    }
-    
-    with torch.no_grad():
-        result = policy.predict_action(obs_dict_cuda)
-    
-    return result['action'].cpu().numpy()
-
-# Usage
-if __name__ == '__main__':
-    policy, cfg = load_fm_policy('path/to/fm_checkpoint.ckpt')
-    
-    # In your control loop:
-    # action = predict_action(policy, obs_dict)
-    # robot.execute(action)
-```
 
 ---
 
