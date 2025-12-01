@@ -1,26 +1,26 @@
-# 🤖 Real Robot 部署指南 - Flow Matching vs DDPM
+# 🤖 Real Robot Deployment Guide - Flow Matching vs DDPM
 
-## 📋 交接資訊
+## 📋 Handoff Information
 
-### 🎯 專案概述
-我們已經完成 Flow Matching (FM) 對 Diffusion Policy (DDPM) 的實驗比較，並在 real robot 數據上訓練完成。FM 的主要優勢是**推理速度快 7-20 倍**，同時保持相近的任務成功率。
+### 🎯 Project Overview
+We have completed the experimental comparison of Flow Matching (FM) against Diffusion Policy (DDPM), with training completed on real robot data. The main advantage of FM is **7-20× faster inference speed** while maintaining similar task success rates.
 
 ---
 
-## 🚀 快速開始：Real Robot 部署
+## 🚀 Quick Start: Real Robot Deployment
 
-### 1️⃣ 環境設置
+### 1️⃣ Environment Setup
 ```bash
-# 連接到 real robot 的機器
+# Connect to the real robot machine
 conda activate DPFM
 
-# 確認 repo
+# Navigate to repo
 cd /path/to/Diffusion-Policy-Flow-Matching/diffusion_policy
 ```
 
-### 2️⃣ 執行評估
+### 2️⃣ Run Evaluation
 
-**Flow Matching (推薦 - 更快)**
+**Flow Matching (Recommended - Faster)**
 ```bash
 python eval_real_robot.py \
     -i /path/to/fm_checkpoint/checkpoints/latest.ckpt \
@@ -38,9 +38,9 @@ python eval_real_robot.py \
 
 ---
 
-## 📁 Checkpoint 位置
+## 📁 Checkpoint Locations
 
-### Flow Matching (v2 - 優化版本，建議使用)
+### Flow Matching (v2 - Optimized Version, Recommended)
 | Task | Path | Steps |
 |------|------|-------|
 | Sphere | `data/outputs/2025.11.29/00.33.00_train_fm_real_robot_fair_sphere/checkpoints/latest.ckpt` | 8 |
@@ -52,7 +52,7 @@ python eval_real_robot.py \
 | Sphere | `diffusion_policy/data/outputs/2025.11.29/01.33.13_train_ddpm_real_robot_sphere/checkpoints/latest.ckpt` | 100 |
 | Cube | `diffusion_policy/data/outputs/2025.11.29/01.44.20_train_ddpm_real_robot_cube/checkpoints/latest.ckpt` | 100 |
 
-### FM v1 (舊版，僅供參考)
+### FM v1 (Legacy, For Reference Only)
 | Task | Path | Steps |
 |------|------|-------|
 | Sphere | `data/outputs/real_robot/2025.11.27/16.22.11_fm_fair_sphere_step4_seed42/checkpoints/latest.ckpt` | 4 |
@@ -60,19 +60,19 @@ python eval_real_robot.py \
 
 ---
 
-## 📊 如何評估 Real Robot 表現
+## 📊 How to Evaluate Real Robot Performance
 
-### 自動記錄的指標 (Latency)
+### Automatically Recorded Metrics (Latency)
 
-執行 `eval_real_robot.py` 時會自動記錄：
+When running `eval_real_robot.py`, the following are automatically recorded:
 
-1. **實時輸出 (每步)**
+1. **Real-time Output (Per Step)**
    ```
    Obs latency 0.0234s
    Inference latency: 45.2ms
    ```
 
-2. **Episode 結束時統計**
+2. **Episode Summary Statistics**
    ```
    ==================================================
    Episode Latency Summary (FM (steps=8))
@@ -85,7 +85,7 @@ python eval_real_robot.py \
    ==================================================
    ```
 
-3. **最終總結**
+3. **Final Summary**
    ```
    ============================================================
    FINAL LATENCY SUMMARY: FM (steps=8)
@@ -96,102 +96,102 @@ python eval_real_robot.py \
    ============================================================
    ```
 
-4. **JSON 輸出** (`latency_stats.json`)
-   - 自動保存在 output 目錄
-   - 包含所有 episode 的詳細統計
+4. **JSON Output** (`latency_stats.json`)
+   - Automatically saved in output directory
+   - Contains detailed statistics for all episodes
 
-### ⚠️ 需要人工記錄的指標
+### ⚠️ Manually Recorded Metrics Required
 
-| 指標 | 說明 | 記錄方式 |
-|------|------|----------|
-| **成功率** | 任務是否成功完成 | 每次 episode 結束後手動記錄 ✅/❌ |
-| **任務完成時間** | 從開始到成功 | 可從 latency_stats.json 的 `duration` 獲得 |
-| **執行品質** | 軌跡平滑度、穩定性 | 主觀評分 1-5 或錄影回放評估 |
-| **碰撞/異常** | 是否有危險動作 | 立即按 'S' 停止並記錄 |
+| Metric | Description | How to Record |
+|--------|-------------|---------------|
+| **Success Rate** | Whether task was completed successfully | Record ✅/❌ after each episode |
+| **Task Completion Time** | Time from start to success | Available from `duration` in latency_stats.json |
+| **Execution Quality** | Trajectory smoothness and stability | Subjective score 1-5 or video review |
+| **Collisions/Anomalies** | Any dangerous movements | Press 'S' immediately to stop and record |
 
-### 📝 建議的評估流程
+### 📝 Recommended Evaluation Workflow
 
-1. **準備評估表格**
+1. **Prepare Evaluation Sheet**
    ```
-   | Episode | Method | Success | Duration | Quality | Notes |
-   |---------|--------|---------|----------|---------|-------|
-   | 1       | FM     | ✅      | 12.5s    | 4/5     |       |
-   | 2       | FM     | ❌      | 15.2s    | 3/5     | 碰撞  |
-   | ...     |        |         |          |         |       |
+   | Episode | Method | Success | Duration | Quality | Notes     |
+   |---------|--------|---------|----------|---------|-----------|
+   | 1       | FM     | ✅      | 12.5s    | 4/5     |           |
+   | 2       | FM     | ❌      | 15.2s    | 3/5     | Collision |
+   | ...     |        |         |          |         |           |
    ```
 
-2. **每種方法至少跑 10 個 episode**
+2. **Run at least 10 episodes per method**
    - FM: 10 episodes
    - DDPM: 10 episodes
 
-3. **評估後比較**
-   - 成功率: FM vs DDPM
-   - 平均時間: FM vs DDPM
-   - Latency: 從 JSON 自動獲得
+3. **Compare after evaluation**
+   - Success rate: FM vs DDPM
+   - Average time: FM vs DDPM
+   - Latency: Obtained from JSON automatically
 
 ---
 
-## 🎮 操作指南
+## 🎮 Control Guide
 
-### 控制按鍵
-| 按鍵 | 功能 |
-|------|------|
-| `C` | 開始評估 (交給 policy 控制) |
-| `S` | 停止評估 (回到人類控制) |
-| `Q` | 退出程式 |
+### Keyboard Controls
+| Key | Function |
+|-----|----------|
+| `C` | Start evaluation (hand over to policy control) |
+| `S` | Stop evaluation (return to human control) |
+| `Q` | Exit program |
 
-### SpaceMouse 操控 (人類控制模式)
-- 移動: XY 平面移動
-- 右鍵: 解鎖 Z 軸
-- 左鍵: 啟用旋轉
+### SpaceMouse Controls (Human Control Mode)
+- Movement: XY plane movement
+- Right button: Unlock Z axis
+- Left button: Enable rotation
 
-### ⚠️ 安全注意事項
-- **隨時準備好按緊急停止按鈕！**
-- 首次測試建議在安全距離觀察
-- 有異常立即按 'S' 停止
+### ⚠️ Safety Notes
+- **Keep emergency stop button ready at all times!**
+- First test recommended at safe distance
+- Press 'S' immediately if any anomaly occurs
 
 ---
 
-## 📈 預期結果
+## 📈 Expected Results
 
-基於 PushT simulation 的結果：
+Based on PushT simulation results:
 
-| Policy | Inference Latency | 相對速度 | 預期成功率 |
-|--------|------------------|----------|-----------|
+| Policy | Inference Latency | Relative Speed | Expected Success Rate |
+|--------|------------------|----------------|----------------------|
 | DDPM (100 steps) | ~650 ms | 1.0× (baseline) | ~77% |
 | FM (16 steps) | ~90 ms | **7.2×** | ~77% |
 | FM (8 steps) | ~50 ms | **13×** | TBD |
 | FM (4 steps) | ~30 ms | **21×** | TBD |
 
-> 🔑 **關鍵發現**: FM 在保持相似成功率的情況下，推理速度提升 7-20 倍！
+> 🔑 **Key Finding**: FM achieves 7-20× faster inference while maintaining similar success rates!
 
 ---
 
-## 🔧 常見問題
+## 🔧 FAQ
 
-### Q: 選擇哪個 checkpoint？
-**A**: 建議使用 **FM v2 (8 steps)**，這是最新優化版本。
+### Q: Which checkpoint should I use?
+**A**: Recommended to use **FM v2 (8 steps)**, which is the latest optimized version.
 
-### Q: FM 的 inference steps 可以調整嗎？
-**A**: 可以！在 checkpoint 載入後，可以 override：
+### Q: Can FM inference steps be adjusted?
+**A**: Yes! After loading the checkpoint, you can override:
 ```python
-# 在 eval_real_robot.py 的 FM 區塊
-policy.num_inference_steps = 4  # 改成 4 步
+# In the FM block of eval_real_robot.py
+policy.num_inference_steps = 4  # Change to 4 steps
 ```
 
-### Q: 如果 latency 太高怎麼辦？
+### Q: What if latency is too high?
 **A**: 
-1. 確認 GPU 正常運作
-2. 減少 FM inference steps
-3. 確認沒有其他程式佔用 GPU
+1. Verify GPU is working properly
+2. Reduce FM inference steps
+3. Ensure no other programs are using the GPU
 
 ---
 
-## 📞 聯繫方式
+## 📞 Contact
 
-如有問題請聯繫：
+For questions, please contact:
 - Danny Liu
-- 相關 commits: `d34b38b`, `58ff66b`, `f28e072`
+- Related commits: `d34b38b`, `58ff66b`, `f28e072`
 
 ---
 
