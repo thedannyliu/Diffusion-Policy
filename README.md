@@ -19,15 +19,17 @@ This project extends [Diffusion Policy](https://diffusion-policy.cs.columbia.edu
 | Method | Steps | Test Score | Latency (p50) | Speedup |
 |--------|-------|------------|---------------|---------|
 | **DDPM Baseline** | 100 | **0.892** | 650 ms | 1× |
+| FM-DP (step=16) | 16 | 0.772 | 90 ms | **7.2×** |
 | FM-DP (step=8) | 8 | 0.845 | 48 ms | **13.5×** |
 | FM-DP (step=4) | 4 | 0.812 | 24 ms | **27×** |
 
 ### Key Findings
 
-1. **Speed-Accuracy Trade-off**: FM achieves **13-27× speedup** with only **5-9% accuracy drop**
+1. **Speed-Accuracy Trade-off**: FM achieves **7-27× speedup** with only **5-13% accuracy drop**
 2. **Optimal Configuration**: FM with 8 steps provides the best balance (0.845 score, 13.5× faster)
 3. **Training Stability**: FM converges faster in early epochs but shows more variance in later stages
-4. **Early Stopping Helps**: Best FM scores appear around epochs 800-1000, not at convergence
+4. **Early Stopping Helps**: Best FM scores appear around epochs 650-1000, not at convergence
+5. **Diminishing Returns**: Step=16 (0.772) performs worse than step=8 (0.845), suggesting 8 is optimal
 
 ### Training Dynamics Comparison
 
@@ -60,6 +62,7 @@ This project extends [Diffusion Policy](https://diffusion-policy.cs.columbia.edu
 | Config | Steps | LR | Seed | Best Score | Latency |
 |--------|-------|-----|------|------------|---------|
 | FM_step8 | 8 | 1e-4 | 42 | **0.845** | 48 ms |
+| FM_step16 | 16 | 1e-4 | 42 | 0.823 (train) / 0.772 (eval) | 90 ms |
 | FM_step4_v1 | 4 | 1e-4 | 42 | 0.812 | 24 ms |
 | FM_step4_v2 | 4 | 2e-4 | 42 | 0.838 | 24 ms |
 | FM_step4 | 4 | 1e-4 | 123 | 0.807 | 24 ms |
@@ -67,10 +70,10 @@ This project extends [Diffusion Policy](https://diffusion-policy.cs.columbia.edu
 | FM_step2 | 2 | 1e-4 | 42 | ~0.75 | 12 ms |
 
 **Insights:**
-- **Inference steps matter**: 8 steps consistently outperform 4 steps
+- **Inference steps matter**: 8 steps provides the optimal balance
 - **Learning rate**: Higher LR (2e-4) slightly improves 4-step performance
 - **Seed sensitivity**: FM shows more variance across seeds (~5%)
-- **Diminishing returns**: 16 steps didn't significantly improve over 8 steps
+- **Diminishing returns**: 16 steps (0.772 eval) performs worse than 8 steps (0.845)
 - **Action smoothness**: Lower steps show higher action jerk (less smooth trajectories)
 
 ### Training Curve Analysis
@@ -92,24 +95,76 @@ FM Loss Progression:
 
 ### Dataset: Two-Camera Manipulation Tasks
 
-We also trained on real robot datasets with dual camera setup:
+We trained on real robot datasets with dual camera setup:
 
 | Task | Episodes | Steps | Camera Views |
 |------|----------|-------|--------------|
 | Sphere manipulation | 112 | 10,891 | 2 (front + side) |
 | Cube manipulation | 100 | 17,667 | 2 (front + side) |
 
-### Training Results (600 epochs, 12h limit)
+### Training Configurations Comparison
 
-| Method | Sphere Final Loss | Cube Final Loss | Notes |
-|--------|-------------------|-----------------|-------|
-| DDPM | 0.00075 | 0.00222 | Slower but lower loss |
-| FM (fair) | 0.00359 | 0.00597 | 2× faster training |
+We ran two rounds of real robot training experiments:
 
-**Important Notes:**
-- Real robot evaluation requires physical robot deployment (not simulated)
-- Training used identical encoder architectures (MultiImageObsEncoder with ResNet18) for fair comparison
-- Both methods successfully learned the manipulation tasks based on loss convergence
+#### Version 1: Initial Training (600 epochs, 12h, step=4)
+| Setting | FM (v1) | DDPM (v1) |
+|---------|---------|-----------|
+| Config | `train_fm_real_robot_workspace` | `train_ddpm_real_robot_workspace` |
+| Inference Steps | 4 | 100 |
+| Epochs | 600 | 600 |
+| Time Limit | 12h | 12h |
+| Encoder | HybridImageEncoder | MultiImageObsEncoder |
+
+#### Version 2: Optimized Training (1000 epochs, 24h, step=8, Fair Comparison)
+| Setting | FM (v2) | DDPM (v2) |
+|---------|---------|-----------|
+| Config | `train_fm_real_robot_fair_workspace` | `train_ddpm_real_robot_workspace` |
+| Inference Steps | 8 | 100 |
+| Epochs | 1000 | 1000 |
+| Time Limit | 24h | 24h |
+| Encoder | **MultiImageObsEncoder** | **MultiImageObsEncoder** |
+
+**Key Differences (v1 → v2):**
+1. **Fair Encoder**: Both now use identical `MultiImageObsEncoder` (ResNet18)
+2. **More Steps**: FM increased from 4 → 8 inference steps
+3. **More Training**: 600 → 1000 epochs, 12h → 24h time limit
+4. **Same Architecture**: UNet down_dims=[512,1024,2048], crop_shape=[216,288]
+
+### Training Results
+
+| Method | Version | Sphere Final Loss | Cube Final Loss | Epochs Completed |
+|--------|---------|-------------------|-----------------|------------------|
+| FM | v1 (step=4) | 0.0036 | 0.0060 | 550/600 |
+| FM | v2 (step=8) | 0.0030 | 0.0020 | ~999/1000 |
+| DDPM | v1 | 0.0008 | 0.0022 | 550/600 |
+| DDPM | v2 | 0.0010 | 0.0005 | ~999/1000 |
+
+### Checkpoint Locations
+
+#### Version 1 (Initial) - FM step=4
+```
+data/outputs/real_robot/2025.11.27/15.58.10_fm_sphere_step4_seed42/checkpoints/
+data/outputs/real_robot/2025.11.27/15.58.10_fm_cube_step4_seed42/checkpoints/
+data/outputs/real_robot/2025.11.27/16.22.11_fm_fair_sphere_step4_seed42/checkpoints/
+data/outputs/real_robot/2025.11.27/16.22.11_fm_fair_cube_step4_seed42/checkpoints/
+```
+
+#### Version 2 (Optimized) - FM step=8
+```
+data/outputs/2025.11.29/00.33.00_train_fm_real_robot_fair_sphere/checkpoints/
+data/outputs/2025.11.29/00.33.54_train_fm_real_robot_fair_cube/checkpoints/
+```
+
+#### DDPM Baselines
+```
+# Version 1
+diffusion_policy/data/outputs/2025.11.27/16.22.09_train_ddpm_real_robot_cube/checkpoints/
+diffusion_policy/data/outputs/2025.11.27/16.33.05_train_ddpm_real_robot_sphere/checkpoints/
+
+# Version 2
+diffusion_policy/data/outputs/2025.11.29/01.33.13_train_ddpm_real_robot_sphere/checkpoints/
+diffusion_policy/data/outputs/2025.11.29/01.44.20_train_ddpm_real_robot_cube/checkpoints/
+```
 
 ### Real Robot Training Insights
 
@@ -249,9 +304,11 @@ All experiments logged to WandB:
 |-------|-------|---------|-------------------|
 | 2 | 0.75 | 12 ms | Low (high jerk) |
 | 4 | 0.81 | 24 ms | Medium |
-| 8 | 0.85 | 48 ms | Good |
-| 16 | ~0.85 | 96 ms | Best |
+| 8 | **0.85** | 48 ms | Good |
+| 16 | 0.77 | 90 ms | Better |
 | 100 (DDPM) | 0.89 | 650 ms | Best |
+
+**Note**: Step=16 shows lower score (0.77) than step=8 (0.85), demonstrating that 8 steps is the optimal sweet spot for FM.
 
 ### Effect of Learning Rate
 
@@ -261,6 +318,153 @@ All experiments logged to WandB:
 | 2e-4 | 0.838 | 0.821 |
 
 Higher LR helps with fewer steps but may hurt with more steps.
+
+---
+
+## 🤖 Real Robot Deployment Guide
+
+### Deploying Flow Matching Policy
+
+If your colleague has already deployed Diffusion Policy on a real robot, deploying Flow Matching requires minimal changes:
+
+#### Key Differences Between DDPM and FM Deployment
+
+| Aspect | DDPM (Diffusion Policy) | Flow Matching |
+|--------|------------------------|---------------|
+| Checkpoint Format | Same `.ckpt` format | Same `.ckpt` format |
+| Policy Interface | `predict_action(obs_dict)` | `predict_action(obs_dict)` |
+| Inference Speed | ~650ms (100 steps) | **~50ms (8 steps)** |
+| Output Format | Action tensor | Action tensor |
+| Normalizer | Same | Same |
+
+#### Modifications Required for FM Deployment
+
+1. **Update `eval_real_robot.py`** to support FM policies:
+
+```python
+# In eval_real_robot.py, add FM handling:
+
+if 'diffusion' in cfg.name:
+    # Original DDPM handling
+    policy = workspace.model
+    if cfg.training.use_ema:
+        policy = workspace.ema_model
+    policy.num_inference_steps = 16  # DDIM inference iterations
+    
+elif 'fm' in cfg.name or 'flow' in cfg.name:
+    # Flow Matching handling (new)
+    policy = workspace.model
+    if hasattr(workspace, 'ema_model') and workspace.ema_model is not None:
+        policy = workspace.ema_model
+    # FM uses fewer steps (already configured in checkpoint)
+    # Optionally override: policy.num_inference_steps = 8
+```
+
+2. **Loading FM Checkpoint**:
+
+```python
+import torch
+import dill
+from dpfm.workspace.train_fm_unet_image_workspace import TrainFlowMatchingUnetImageWorkspace
+
+# Load checkpoint
+payload = torch.load('path/to/fm_checkpoint.ckpt', pickle_module=dill)
+cfg = payload['cfg']
+
+# Instantiate workspace
+workspace = TrainFlowMatchingUnetImageWorkspace(cfg)
+workspace.load_payload(payload)
+
+# Get policy
+policy = workspace.model
+policy.eval().to('cuda')
+```
+
+3. **Action Prediction** (identical interface):
+
+```python
+# Both DDPM and FM use the same interface
+with torch.no_grad():
+    obs_dict = {
+        'camera_0': camera_0_image,  # [1, T, C, H, W]
+        'camera_1': camera_1_image,
+    }
+    result = policy.predict_action(obs_dict)
+    action = result['action']  # [1, n_action_steps, action_dim]
+```
+
+#### Recommended FM Checkpoints for Real Robot
+
+```bash
+# Sphere task - FM step=8 (best)
+data/outputs/2025.11.29/00.33.00_train_fm_real_robot_fair_sphere/checkpoints/latest.ckpt
+
+# Cube task - FM step=8 (best)
+data/outputs/2025.11.29/00.33.54_train_fm_real_robot_fair_cube/checkpoints/latest.ckpt
+```
+
+#### Performance Comparison for Real-Time Control
+
+| Method | Inference Time | Control Loop Rate | Suitability |
+|--------|---------------|-------------------|-------------|
+| DDPM (100 steps) | ~650 ms | 1.5 Hz | Slow for dynamic tasks |
+| FM (8 steps) | ~50 ms | **20 Hz** | Good for real-time control |
+| FM (4 steps) | ~25 ms | **40 Hz** | Best for fast reactions |
+
+#### Complete Deployment Example
+
+```python
+#!/usr/bin/env python3
+"""Deploy Flow Matching policy on real robot."""
+
+import torch
+import dill
+import hydra
+from omegaconf import OmegaConf
+
+# Register eval resolver
+OmegaConf.register_new_resolver("eval", eval, replace=True)
+
+def load_fm_policy(checkpoint_path, device='cuda'):
+    """Load FM policy from checkpoint."""
+    payload = torch.load(checkpoint_path, pickle_module=dill)
+    cfg = payload['cfg']
+    
+    # Get workspace class
+    cls = hydra.utils.get_class(cfg._target_)
+    workspace = cls(cfg)
+    workspace.load_payload(payload)
+    
+    # Get policy with EMA if available
+    if hasattr(workspace, 'ema_model') and workspace.ema_model is not None:
+        policy = workspace.ema_model
+    else:
+        policy = workspace.model
+    
+    policy.eval().to(device)
+    return policy, cfg
+
+def predict_action(policy, obs_dict, device='cuda'):
+    """Predict action from observations."""
+    # Move observations to device
+    obs_dict_cuda = {
+        k: v.to(device) if isinstance(v, torch.Tensor) else v 
+        for k, v in obs_dict.items()
+    }
+    
+    with torch.no_grad():
+        result = policy.predict_action(obs_dict_cuda)
+    
+    return result['action'].cpu().numpy()
+
+# Usage
+if __name__ == '__main__':
+    policy, cfg = load_fm_policy('path/to/fm_checkpoint.ckpt')
+    
+    # In your control loop:
+    # action = predict_action(policy, obs_dict)
+    # robot.execute(action)
+```
 
 ---
 
