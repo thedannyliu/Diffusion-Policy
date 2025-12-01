@@ -104,6 +104,23 @@ def main(input, output, robot_ip, match_dataset, match_episode,
         policy.num_inference_steps = 16 # DDIM inference iterations
         policy.n_action_steps = policy.horizon - policy.n_obs_steps + 1
 
+    elif 'fm' in cfg.name or 'flow' in cfg.name:
+        # Flow Matching model - uses same interface as diffusion but with fewer steps
+        policy: BaseImagePolicy
+        policy = workspace.model
+        if hasattr(workspace, 'ema_model') and workspace.ema_model is not None:
+            policy = workspace.ema_model
+
+        device = torch.device('cuda')
+        policy.eval().to(device)
+
+        # FM uses fewer inference steps (already configured in checkpoint)
+        # Default is 4 or 8 steps, can be overridden here if needed
+        # policy.num_inference_steps = 8  # Optional: override inference steps
+        policy.n_action_steps = policy.horizon - policy.n_obs_steps + 1
+        
+        print(f"[FM] Using {policy.num_inference_steps} inference steps")
+
     elif 'robomimic' in cfg.name:
         # BCRNN model
         policy: BaseImagePolicy
