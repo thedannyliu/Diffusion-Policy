@@ -19,9 +19,9 @@ cd "$PROJECT_DIR"
 ACCOUNT="gts-agarg35-ideas_l40s"
 PARTITION="gpu-l40s"
 TIME="20:00:00"
-MEM="384G"
+MEM="64G"  # Reduced from 384G to allow multiple jobs per node
 CPUS=8
-GPU="L40S:1"
+GPU="l40s:1"  # lowercase for proper GPU type matching
 
 LOG_DIR="${PROJECT_DIR}/logs/experiments"
 mkdir -p "$LOG_DIR"

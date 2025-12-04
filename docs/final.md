@@ -4,22 +4,40 @@
 
 This document contains the complete experimental setup for comparing **Diffusion Policy (DDPM)** and **Flow Matching (FM)** approaches on the PushT benchmark task.
 
+## Currently Running Experiments (Phase 1: Baselines + Ablation A)
+
+### Active Jobs (2025-12-04 04:10 EST)
+
+| Job ID | Experiment | Method | Architecture | Inference Steps | Node | Status |
+|--------|------------|--------|--------------|-----------------|------|--------|
+| 2526314 | ddpm_unet_s42 | DDPM | UNet | 100 | atl1-1-03-004-29-0 | ✅ Training |
+| 2525656 | fm_unet_s42 | FM | UNet | 4 | atl1-1-03-007-29-0 | ✅ Training |
+| 2525657 | fm_trans_s42 | FM | Transformer | 4 | atl1-1-03-007-31-0 | ✅ Training |
+| 2525658 | fm_steps4 | FM | UNet | 4 | atl1-1-01-010-29-0 | ✅ Training |
+| 2525659 | fm_steps8 | FM | UNet | 8 | atl1-1-01-010-31-0 | ✅ Training |
+| 2525660 | fm_steps16 | FM | UNet | 16 | atl1-1-01-010-33-0 | ✅ Training |
+
+**Total: 6 jobs running (3 Baselines + 3 Ablation A)**
+
 ## Experiment Structure
 
-### 1. Baseline Experiments
+### Phase 1: Baselines + Ablation A (Currently Running)
 
+#### Baselines
 | Experiment | Method | Architecture | Inference Steps | Epochs |
 |------------|--------|--------------|-----------------|--------|
 | `ddpm_unet_s42` | DDPM | UNet | 100 | 3050 |
 | `fm_unet_s42` | FM | UNet | 4 | 3050 |
 | `fm_trans_s42` | FM | Transformer | 4 | 3050 |
 
-### 2. Ablation Studies
-
 #### Ablation A: Inference Steps (FM only)
-- `fm_steps4`: 4 inference steps (baseline)
-- `fm_steps8`: 8 inference steps
-- `fm_steps16`: 16 inference steps
+| Experiment | Inference Steps |
+|------------|-----------------|
+| `fm_steps4` | 4 steps (baseline) |
+| `fm_steps8` | 8 steps |
+| `fm_steps16` | 16 steps |
+
+### Phase 2: Additional Ablations (To be submitted later)
 
 #### Ablation B: Learning Rate + Warmup
 - `fm_lr1e-4_w500`: lr=1e-4, warmup=500 (baseline)
@@ -31,12 +49,9 @@ This document contains the complete experimental setup for comparing **Diffusion
 - Seeds: 42, 43, 44, 45, 46 (5 runs)
 
 #### Ablation D: Dataset Size
-- `fm_data90`: 90 episodes (full)
-- `fm_data60`: 60 episodes
-- `fm_data30`: 30 episodes
-- `ddpm_data90`: 90 episodes (full)
-- `ddpm_data60`: 60 episodes
-- `ddpm_data30`: 30 episodes
+- `fm_data90`, `ddpm_data90`: 90 episodes (full)
+- `fm_data60`, `ddpm_data60`: 60 episodes
+- `fm_data30`, `ddpm_data30`: 30 episodes
 
 ## Metrics Tracked
 
@@ -58,10 +73,29 @@ All experiments log the following to WandB:
 
 - **Cluster**: Georgia Tech PACE Phoenix
 - **Account**: gts-agarg35-ideas_l40s
+- **Partition**: gpu-l40s
 - **GPU**: NVIDIA L40S (1 per job)
-- **Memory**: 384 GB
+- **Memory**: 64 GB (reduced from 384GB to allow multiple jobs per node)
 - **Time**: 20 hours per job
-- **Conda**: DPFM
+- **Conda Environment**: DPFM
+
+### Node Information
+- Each node has 8 L40S GPUs and 515GB memory
+- Multiple jobs can run on the same node with 64GB memory allocation
+- Known working nodes: atl1-1-03-007-29-0, atl1-1-03-007-31-0, atl1-1-01-010-29-0, atl1-1-01-010-31-0, atl1-1-01-010-33-0, atl1-1-03-004-29-0
+- Problematic nodes (CUDA errors): atl1-1-03-004-31-0, atl1-1-01-010-35-0
+
+## WandB Project
+
+- **Project**: `dpfm_pusht_experiments`
+- **URL**: https://wandb.ai/danny010324/dpfm_pusht_experiments
+- **Groups**:
+  - `ddpm_baselines`
+  - `fm_baselines`
+  - `ablation_steps`
+  - `ablation_lr`
+  - `ablation_seeds`
+  - `ablation_data`
 
 ## File Structure
 
@@ -69,10 +103,10 @@ All experiments log the following to WandB:
 dpfm/
 ├── config/
 │   ├── task/
-│   │   └── pusht_image.yaml          # PushT task config
-│   ├── train_ddpm_unet_hybrid_pusht.yaml    # DDPM baseline
-│   ├── train_fm_unet_hybrid_image_workspace.yaml    # FM UNet
-│   └── train_fm_transformer_hybrid_image_workspace.yaml  # FM Transformer
+│   │   └── pusht_image.yaml                        # PushT task config
+│   ├── train_ddpm_unet_hybrid_pusht.yaml           # DDPM baseline config
+│   ├── train_fm_unet_hybrid_image_workspace.yaml   # FM UNet config
+│   └── train_fm_transformer_hybrid_image_workspace.yaml  # FM Transformer config
 ├── policy/
 │   ├── flow_matching_unet_hybrid_image_policy.py
 │   └── flow_matching_transformer_hybrid_image_policy.py
@@ -83,7 +117,8 @@ dpfm/
 
 scripts/
 ├── submit_experiments.sh             # Master experiment submission
-└── test_ddpm_config.sh              # DDPM config test
+├── submit_ddpm_baseline.sh           # DDPM baseline submission
+└── test_ddpm_config.sh              # DDPM config validation
 
 docs/
 ├── ablation_design.md               # Ablation study design
@@ -93,98 +128,62 @@ diffusion_policy/
 └── env/pusht/pusht_visualization.py # Heatmap trajectory plots
 ```
 
-## Running Experiments
+## Previous Training Results
 
-### Test Single Config
+Existing trained models from earlier experiments:
+
+| Path | Best Score | Notes |
+|------|------------|-------|
+| `data/outputs/2025.11.27/04.36.04_train_fm_unet_hybrid_pusht_image/` | 0.845 | FM UNet, epoch 900 |
+| `data/outputs/2025.11.27/14.28.45_train_fm_unet_hybrid_pusht_image/` | 0.838 | FM UNet, epoch 200 |
+| `data/outputs/2025.11.29/00.32.47_train_fm_unet_hybrid_pusht_image/` | 0.823 | FM UNet, epoch 650 |
+
+## Running Commands
+
+### Check Job Status
 ```bash
-# Test DDPM config (2 epochs, no wandb)
-sbatch scripts/test_ddpm_config.sh
+# Check all running jobs
+squeue -u eliu354 --format="%.10i %.15j %.2t %.10M %R"
+
+# Check specific job progress
+tail -30 logs/experiments/ddpm_unet_s42_2526314.err
+grep "Training epoch" logs/experiments/fm_unet_s42_2525656.err | tail -5
 ```
 
-### Submit All Experiments
+### Submit New Jobs
 ```bash
-# Dry run to see what will be submitted
-bash scripts/submit_experiments.sh --dry-run
-
-# Submit all baselines
-bash scripts/submit_experiments.sh --baseline
-
-# Submit specific ablation
-bash scripts/submit_experiments.sh --ablation-steps
+# Submit remaining ablations after Phase 1 completes
 bash scripts/submit_experiments.sh --ablation-lr
 bash scripts/submit_experiments.sh --ablation-seeds
 bash scripts/submit_experiments.sh --ablation-data
-
-# Submit everything
-bash scripts/submit_experiments.sh
 ```
 
-## Job Tracking
+## Evaluation (After Training Completes)
 
-### Test Jobs
-| Job ID | Experiment | Status | Notes |
-|--------|------------|--------|-------|
-| 2525610 | test_ddpm | ✅ Completed | Config validation passed |
+### Run Evaluation
+```bash
+# Evaluate a trained model
+python dpfm/eval.py \
+    --checkpoint_path data/outputs/2025.12.04/<run_dir>/checkpoints/latest.ckpt \
+    --n_eval_episodes 50 \
+    --output_dir results/eval/<exp_name>
+```
 
-### Submitted Experiments (2025-12-04 03:31 EST)
+### Generate Trajectory Heatmaps
+The `PushTImageRunner` automatically generates heatmap-style trajectory visualizations similar to the original Diffusion Policy paper figure during evaluation.
 
-| Job ID | Experiment | Category | Method | Notes |
-|--------|------------|----------|--------|-------|
-| 2525655 | ddpm_unet_s42 | Baseline | DDPM | 100 inference steps |
-| 2525656 | fm_unet_s42 | Baseline | FM | 4 inference steps |
-| 2525657 | fm_trans_s42 | Baseline | FM | Transformer arch |
-| 2525658 | fm_steps4 | Ablation A | FM | 4 steps |
-| 2525659 | fm_steps8 | Ablation A | FM | 8 steps |
-| 2525660 | fm_steps16 | Ablation A | FM | 16 steps |
-| 2525661 | fm_lr1e-4_w500 | Ablation B | FM | lr=1e-4, warmup=500 |
-| 2525662 | fm_lr1e-4_w1000 | Ablation B | FM | lr=1e-4, warmup=1000 |
-| 2525663 | fm_lr2e-4_w500 | Ablation B | FM | lr=2e-4, warmup=500 |
-| 2525664 | fm_lr2e-4_w1000 | Ablation B | FM | lr=2e-4, warmup=1000 |
-| 2525665 | fm_seed42 | Ablation C | FM | seed=42 |
-| 2525666 | fm_seed43 | Ablation C | FM | seed=43 |
-| 2525667 | fm_seed44 | Ablation C | FM | seed=44 |
-| 2525668 | fm_seed45 | Ablation C | FM | seed=45 |
-| 2525669 | fm_seed46 | Ablation C | FM | seed=46 |
-| 2525670 | fm_data90 | Ablation D | FM | 90 episodes |
-| 2525671 | ddpm_data90 | Ablation D | DDPM | 90 episodes |
-| 2525672 | fm_data60 | Ablation D | FM | 60 episodes |
-| 2525673 | ddpm_data60 | Ablation D | DDPM | 60 episodes |
-| 2525674 | fm_data30 | Ablation D | FM | 30 episodes |
-| 2525675 | ddpm_data30 | Ablation D | DDPM | 30 episodes |
+## Troubleshooting
 
-**Total: 22 experiments**
+### CUDA Errors
+If you encounter `CUDA error: uncorrectable ECC error` or `CUDA-capable device(s) is/are busy or unavailable`:
+1. Check node allocation - some nodes have faulty GPUs
+2. Use known working nodes (see Cluster Configuration section)
+3. Reduce memory allocation from 384GB to 64GB
 
-Job log: `logs/experiments/jobs_20251204_033108.txt`
-
-## WandB Project
-
-- **Project**: `dpfm_pusht_experiments`
-- **Groups**:
-  - `ddpm_baselines`
-  - `fm_baselines`
-  - `ablation_steps`
-  - `ablation_lr`
-  - `ablation_seeds`
-  - `ablation_data`
-
-## Key Findings
-
-*To be filled after experiments complete.*
-
-### Expected Results
-
-Based on prior work:
-- FM should achieve similar success rate to DDPM
-- FM with 4-16 steps should be 6-25x faster than DDPM (100 steps)
-- FM should maintain trajectory quality with fewer steps
-
-### Trajectory Visualization
-
-Each evaluation generates:
-1. Heatmap-style trajectory plot (multiple rollouts overlaid)
-2. T-shape goal region clearly visible
-3. Color gradient showing trajectory progression
-4. Coverage and success statistics
+### Job Submission Issues
+- Maximum ~6 jobs can run concurrently
+- Use `--dry-run` flag to preview submissions
+- Check job logs in `logs/experiments/`
 
 ## References
 
@@ -194,5 +193,4 @@ Each evaluation generates:
 
 ---
 
-*Last updated: [Date]*
-*Author: [Your Name]*
+*Last updated: 2025-12-04 04:10 EST*
