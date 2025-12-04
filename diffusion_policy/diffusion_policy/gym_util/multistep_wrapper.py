@@ -87,10 +87,13 @@ class MultiStepWrapper(gym.Wrapper):
         self.reward_agg_method = reward_agg_method
         self.n_obs_steps = n_obs_steps
 
+        # Observation and rollout buffers
         self.obs = deque(maxlen=n_obs_steps+1)
         self.reward = list()
         self.done = list()
-        self.info = defaultdict(lambda : deque(maxlen=n_obs_steps+1))
+        # Store full info history per episode; dict_take_last_n
+        # will select the last n elements when returning info.
+        self.info = defaultdict(list)
     
     def reset(self, **kwargs):
         """Resets the environment using kwargs."""
@@ -102,7 +105,7 @@ class MultiStepWrapper(gym.Wrapper):
         self.obs = deque([obs], maxlen=self.n_obs_steps+1)
         self.reward = list()
         self.done = list()
-        self.info = defaultdict(lambda : deque(maxlen=self.n_obs_steps+1))
+        self.info = defaultdict(list)
 
         obs = self._get_obs(self.n_obs_steps)
         return obs

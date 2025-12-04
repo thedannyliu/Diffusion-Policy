@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:L40s:1
 #SBATCH --time=2:00:00
 #SBATCH --partition=gpu-l40s
-#SBATCH --account=gts-agarg35
+#SBATCH --account=gts-agarg35-ideas_l40s
 #SBATCH --qos=inferno
 #SBATCH --output=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval_%j.out
 #SBATCH --error=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval_%j.err
@@ -54,7 +54,9 @@ if [ -n "$CHECKPOINT" ]; then
         --checkpoint "${CHECKPOINT}" \
         --output_dir "${OUTPUT_DIR}" \
         --n_test 50 \
-        --device cuda:0
+        --device cuda:0 \
+        --wandb_project "DPFM_eval" \
+        --wandb_mode "offline"
 else
     # Evaluate all checkpoints in results
     echo "No specific checkpoint provided."

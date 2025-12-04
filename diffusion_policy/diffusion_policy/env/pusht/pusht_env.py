@@ -88,6 +88,10 @@ class PushTEnv(gym.Env):
         self.render_buffer = None
         self.latest_action = None
         self.reset_to_state = reset_to_state
+        # Logging buffers for coverage and reward for metrics
+        self.current_coverage = 0.0
+        self.current_reward = 0.0
+        self.current_done = False
     
     def reset(self):
         seed = self._seed
@@ -137,6 +141,11 @@ class PushTEnv(gym.Env):
         reward = np.clip(coverage / self.success_threshold, 0, 1)
         done = coverage > self.success_threshold
 
+        # Cache metrics needed for logging and analysis
+        self.current_coverage = coverage
+        self.current_reward = reward
+        self.current_done = done
+
         observation = self._get_obs()
         info = self._get_info()
 
@@ -181,7 +190,12 @@ class PushTEnv(gym.Env):
             'vel_agent': np.array(self.agent.velocity),
             'block_pose': np.array(list(self.block.position) + [self.block.angle]),
             'goal_pose': self.goal_pose,
-            'n_contacts': n_contact_points_per_step}
+            'n_contacts': n_contact_points_per_step,
+            # Additional fields for downstream metrics
+            'coverage': float(self.current_coverage),
+            'reward': float(self.current_reward),
+            'success': bool(self.current_done),
+        }
         return info
 
     def _render_frame(self, mode):

@@ -18,6 +18,7 @@ import numpy as np
 import torch
 import dill
 import hydra
+import wandb
 from omegaconf import OmegaConf
 
 # Add paths
@@ -126,7 +127,20 @@ def compute_action_jerk(actions: np.ndarray) -> float:
 @click.option('--output_dir', '-o', default=None, help='Output directory')
 @click.option('--n_test', '-n', default=50, help='Number of test episodes')
 @click.option('--device', '-d', default='cuda:0', help='Device to use')
-def main(checkpoint: str, output_dir: str, n_test: int, device: str):
+@click.option('--wandb_project', default=None, help='WandB project for eval logging')
+@click.option('--wandb_entity', default=None, help='WandB entity (team/user) for eval logging')
+@click.option('--wandb_group', default=None, help='Optional WandB group name')
+@click.option('--wandb_mode', default='online', type=click.Choice(['online', 'offline', 'disabled']), help='WandB mode')
+def main(
+    checkpoint: str,
+    output_dir: str,
+    n_test: int,
+    device: str,
+    wandb_project: str,
+    wandb_entity: str,
+    wandb_group: str,
+    wandb_mode: str,
+):
     """Evaluate a trained policy."""
     print(f"Loading checkpoint: {checkpoint}")
     policy, cfg = load_checkpoint(checkpoint, device)
@@ -134,9 +148,17 @@ def main(checkpoint: str, output_dir: str, n_test: int, device: str):
     print(f"Running evaluation with {n_test} test episodes...")
     log_data = run_evaluation(policy, cfg, n_test=n_test, output_dir=output_dir, device=device)
     
-    # Extract key metrics
+    # Extract key metrics (PushT + generic)
     metrics = {
+        # Original DP-style score
         'test_mean_score': log_data.get('test/mean_score', 0.0),
+        # PushT-specific metrics
+        'test_success_rate': log_data.get('test/success_rate', 0.0),
+        'test_target_area_coverage': log_data.get('test/target_area_coverage', 0.0),
+        'test_final_distance': log_data.get('test/final_distance', 0.0),
+        'test_mean_step_count': log_data.get('test/mean_step_count', 0.0),
+        'test_smoothness': log_data.get('test/smoothness', 0.0),
+        # Latency statistics
         'inference_latency_ms': log_data.get('inference_latency_ms', 0.0),
         'inference_latency_p50_ms': log_data.get('inference_latency_p50_ms', 0.0),
         'inference_latency_p95_ms': log_data.get('inference_latency_p95_ms', 0.0),
@@ -147,11 +169,33 @@ def main(checkpoint: str, output_dir: str, n_test: int, device: str):
     print("EVALUATION RESULTS")
     print("="*50)
     print(f"Test Mean Score: {metrics['test_mean_score']:.4f}")
+    print(f"Test Success Rate: {metrics['test_success_rate']:.4f}")
+    print(f"Target-area Coverage: {metrics['test_target_area_coverage']:.4f}")
+    print(f"Final Distance: {metrics['test_final_distance']:.4f}")
+    print(f"Mean Step Count: {metrics['test_mean_step_count']:.2f}")
+    print(f"Smoothness: {metrics['test_smoothness']:.4e}")
     print(f"Inference Latency (mean): {metrics['inference_latency_ms']:.2f} ms")
     print(f"Inference Latency (p50): {metrics['inference_latency_p50_ms']:.2f} ms")
     print(f"Inference Latency (p95): {metrics['inference_latency_p95_ms']:.2f} ms")
     print("="*50 + "\n")
     
+    # Optionally log to WandB (new eval-specific run)
+    if wandb_project is not None and wandb_mode != 'disabled':
+        wandb_run = wandb.init(
+            project=wandb_project,
+            entity=wandb_entity,
+            group=wandb_group,
+            mode=wandb_mode,
+            name=f"eval_{pathlib.Path(checkpoint).stem}",
+            config={
+                "checkpoint": checkpoint,
+                "n_test": n_test,
+                "device": device,
+            },
+        )
+        wandb.log(log_data)
+        wandb_run.finish()
+
     # Save results
     if output_dir:
         output_path = pathlib.Path(output_dir)
@@ -160,7 +204,26 @@ def main(checkpoint: str, output_dir: str, n_test: int, device: str):
         with open(output_path / 'eval_results.json', 'w') as f:
             json.dump(metrics, f, indent=2)
         
+        # Also dump full log_data for detailed analysis
+        # For the full log, convert wandb media objects to file paths
+        serializable_log = {}
+        for key, value in log_data.items():
+            if isinstance(value, (np.floating, np.number)):
+                serializable_log[key] = float(value)
+            elif isinstance(value, torch.Tensor):
+                serializable_log[key] = value.detach().cpu().tolist()
+            elif isinstance(value, wandb.sdk.data_types.video.Video):
+                serializable_log[key] = value._path
+            elif isinstance(value, wandb.Image):
+                serializable_log[key] = value.image.filename if hasattr(value.image, "filename") else None
+            else:
+                serializable_log[key] = value
+
+        with open(output_path / 'eval_log_full.json', 'w') as f:
+            json.dump(serializable_log, f, indent=2)
+
         print(f"Results saved to {output_path / 'eval_results.json'}")
+        print(f"Full log saved to {output_path / 'eval_log_full.json'}")
     
     return metrics
 
