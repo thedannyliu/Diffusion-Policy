@@ -121,12 +121,40 @@ bash scripts/submit_experiments.sh
 
 ## Job Tracking
 
-### Submitted Jobs
-
+### Test Jobs
 | Job ID | Experiment | Status | Notes |
 |--------|------------|--------|-------|
-| 2525610 | test_ddpm | Pending | Config validation test |
-| TBD | All experiments | - | - |
+| 2525610 | test_ddpm | ✅ Completed | Config validation passed |
+
+### Submitted Experiments (2025-12-04 03:31 EST)
+
+| Job ID | Experiment | Category | Method | Notes |
+|--------|------------|----------|--------|-------|
+| 2525655 | ddpm_unet_s42 | Baseline | DDPM | 100 inference steps |
+| 2525656 | fm_unet_s42 | Baseline | FM | 4 inference steps |
+| 2525657 | fm_trans_s42 | Baseline | FM | Transformer arch |
+| 2525658 | fm_steps4 | Ablation A | FM | 4 steps |
+| 2525659 | fm_steps8 | Ablation A | FM | 8 steps |
+| 2525660 | fm_steps16 | Ablation A | FM | 16 steps |
+| 2525661 | fm_lr1e-4_w500 | Ablation B | FM | lr=1e-4, warmup=500 |
+| 2525662 | fm_lr1e-4_w1000 | Ablation B | FM | lr=1e-4, warmup=1000 |
+| 2525663 | fm_lr2e-4_w500 | Ablation B | FM | lr=2e-4, warmup=500 |
+| 2525664 | fm_lr2e-4_w1000 | Ablation B | FM | lr=2e-4, warmup=1000 |
+| 2525665 | fm_seed42 | Ablation C | FM | seed=42 |
+| 2525666 | fm_seed43 | Ablation C | FM | seed=43 |
+| 2525667 | fm_seed44 | Ablation C | FM | seed=44 |
+| 2525668 | fm_seed45 | Ablation C | FM | seed=45 |
+| 2525669 | fm_seed46 | Ablation C | FM | seed=46 |
+| 2525670 | fm_data90 | Ablation D | FM | 90 episodes |
+| 2525671 | ddpm_data90 | Ablation D | DDPM | 90 episodes |
+| 2525672 | fm_data60 | Ablation D | FM | 60 episodes |
+| 2525673 | ddpm_data60 | Ablation D | DDPM | 60 episodes |
+| 2525674 | fm_data30 | Ablation D | FM | 30 episodes |
+| 2525675 | ddpm_data30 | Ablation D | DDPM | 30 episodes |
+
+**Total: 22 experiments**
+
+Job log: `logs/experiments/jobs_20251204_033108.txt`
 
 ## WandB Project
 
