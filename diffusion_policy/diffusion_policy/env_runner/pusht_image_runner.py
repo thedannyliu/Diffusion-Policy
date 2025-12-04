@@ -9,6 +9,11 @@ import math
 import matplotlib.pyplot as plt
 import wandb.sdk.data_types.video as wv
 from diffusion_policy.env.pusht.pusht_image_env import PushTImageEnv
+from diffusion_policy.env.pusht.pusht_visualization import (
+    create_pusht_trajectory_plot,
+    create_pusht_background,
+    plot_trajectory_heatmap
+)
 from diffusion_policy.gym_util.simple_vec_env import SimpleSyncVectorEnv
 # from diffusion_policy.gym_util.async_vector_env import AsyncVectorEnv
 # from diffusion_policy.gym_util.sync_vector_env import SyncVectorEnv
@@ -377,46 +382,82 @@ class PushTImageRunner(BaseImageRunner):
 
         # Generate a few trajectory plots for qualitative analysis (test rollouts)
         try:
-            n_traj_plots = 3
-            plot_count = 0
+            # Collect all valid test trajectories for heatmap-style plot
+            test_block_trajs = []
+            test_agent_trajs = []
+            test_coverages = []
+            test_goal_pose = None
+            
             for idx in range(n_inits):
                 if self.env_prefixs[idx] != 'test/':
                     continue
-                if plot_count >= n_traj_plots:
-                    break
+                    
                 block_traj = all_block_trajectories[idx]
                 agent_traj = all_agent_trajectories[idx]
+                
                 # Check for valid trajectory data
-                if block_traj is None or agent_traj is None:
+                if block_traj is None or not isinstance(block_traj, np.ndarray):
                     continue
-                if not isinstance(block_traj, np.ndarray) or block_traj.size == 0:
-                    continue
-                if not isinstance(agent_traj, np.ndarray) or agent_traj.size == 0:
-                    continue
-                if block_traj.ndim < 2 or agent_traj.ndim < 2:
+                if block_traj.ndim < 2 or block_traj.shape[0] < 2:
                     continue
                     
-                seed = self.env_seeds[idx]
-
-                fig, ax = plt.subplots(figsize=(4, 4))
-                ax.plot(block_traj[:, 0], block_traj[:, 1], '-o', markersize=2, label='block')
-                ax.plot(agent_traj[:, 0], agent_traj[:, 1], '-x', markersize=2, label='agent')
-                ax.set_title(f'Test trajectory (seed={seed})')
-                ax.set_xlabel('x')
-                ax.set_ylabel('y')
-                ax.set_xlim(0, 512)
-                ax.set_ylim(0, 512)
-                ax.set_aspect('equal', 'box')
-                ax.legend()
-                fig.tight_layout()
-
-                fig_path = pathlib.Path(self.output_dir).joinpath(f"trajectory_seed_{seed}.png")
-                fig_path.parent.mkdir(parents=True, exist_ok=True)
-                fig.savefig(fig_path)
+                test_block_trajs.append(block_traj)
+                if agent_traj is not None and isinstance(agent_traj, np.ndarray) and agent_traj.ndim >= 2:
+                    test_agent_trajs.append(agent_traj)
+                    
+                # Collect coverage values
+                coverages = all_coverages[idx]
+                if coverages is not None and len(coverages) > 0:
+                    test_coverages.append(float(np.max(coverages)))
+                    
+                # Get goal pose from first valid trajectory
+                if test_goal_pose is None:
+                    infos_list = env.call('get_infos')
+                    if len(infos_list) > 0:
+                        goal_pose_list = infos_list[0].get('goal_pose', [])
+                        if len(goal_pose_list) > 0:
+                            test_goal_pose = np.array(goal_pose_list[0])
+            
+            # Create combined heatmap trajectory plot with all test rollouts
+            if len(test_block_trajs) >= 3:
+                fig = create_pusht_trajectory_plot(
+                    block_trajectories=test_block_trajs,
+                    agent_trajectories=test_agent_trajs if len(test_agent_trajs) > 0 else None,
+                    goal_pose=test_goal_pose,
+                    title='Policy Rollouts',
+                    coverage_values=test_coverages,
+                    figsize=(6, 6),
+                    save_path=str(pathlib.Path(self.output_dir).joinpath("trajectory_heatmap.png")),
+                    show_colorbar=True
+                )
                 plt.close(fig)
-
-                log_data[f'test/trajectory_plot_{seed}'] = wandb.Image(str(fig_path))
-                plot_count += 1
+                log_data['test/trajectory_heatmap'] = wandb.Image(
+                    str(pathlib.Path(self.output_dir).joinpath("trajectory_heatmap.png"))
+                )
+            
+            # Also save individual trajectory plots for detailed analysis (first 3)
+            n_traj_plots = min(3, len(test_block_trajs))
+            for plot_idx in range(n_traj_plots):
+                block_traj = test_block_trajs[plot_idx]
+                agent_traj = test_agent_trajs[plot_idx] if plot_idx < len(test_agent_trajs) else None
+                
+                fig, ax = plt.subplots(figsize=(5, 5))
+                create_pusht_background(ax, goal_pose=test_goal_pose)
+                plot_trajectory_heatmap(ax, [block_traj], cmap_name='plasma', linewidth=2.5, alpha=0.8, label='Block')
+                if agent_traj is not None:
+                    plot_trajectory_heatmap(ax, [agent_traj], cmap_name='viridis', linewidth=1.5, alpha=0.6, label='Agent')
+                
+                cov = test_coverages[plot_idx] if plot_idx < len(test_coverages) else 0
+                ax.set_title(f'Rollout {plot_idx+1} (Coverage: {cov:.1%})', fontsize=11)
+                ax.legend(loc='upper left')
+                plt.tight_layout()
+                
+                fig_path = pathlib.Path(self.output_dir).joinpath(f"trajectory_rollout_{plot_idx+1}.png")
+                fig.savefig(fig_path, dpi=150, bbox_inches='tight', facecolor='white')
+                plt.close(fig)
+                
+                log_data[f'test/trajectory_rollout_{plot_idx+1}'] = wandb.Image(str(fig_path))
+                
         except Exception as e:
             # Do not fail evaluation if plotting fails (e.g., no DISPLAY)
             import traceback

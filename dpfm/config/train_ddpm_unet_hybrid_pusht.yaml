@@ -1,0 +1,158 @@
+# DDPM UNet Hybrid Baseline Config for PushT
+# Reproduces the original Diffusion Policy paper settings
+
+defaults:
+  - _self_
+  - task: pusht_image
+
+name: train_ddpm_unet_hybrid
+_target_: diffusion_policy.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
+
+exp_name: ddpm_unet_baseline
+task_name: pusht_image
+
+# === Key Paper Settings ===
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+obs_as_global_cond: true
+past_action_visible: false
+keypoint_visible_rate: 1.0
+dataset_obs_steps: ${n_obs_steps}
+
+# === Shape Meta ===
+shape_meta:
+  obs:
+    image:
+      shape: [3, 96, 96]
+      type: rgb
+    agent_pos:
+      shape: [2]
+      type: low_dim
+  action:
+    shape: [2]
+
+# === DDPM Policy (Original Paper Settings) ===
+policy:
+  _target_: diffusion_policy.policy.diffusion_unet_hybrid_image_policy.DiffusionUnetHybridImagePolicy
+  
+  shape_meta: ${shape_meta}
+  horizon: ${horizon}
+  n_action_steps: ${n_action_steps}
+  n_obs_steps: ${n_obs_steps}
+  
+  # UNet architecture (paper settings)
+  down_dims: [512, 1024, 2048]
+  kernel_size: 5
+  n_groups: 8
+  diffusion_step_embed_dim: 128
+  cond_predict_scale: true
+  
+  # Observation encoder
+  obs_encoder_group_norm: true
+  crop_shape: [84, 84]
+  eval_fixed_crop: true
+  obs_as_global_cond: ${obs_as_global_cond}
+  
+  # DDPM Noise Scheduler
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
+    num_train_timesteps: 100
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: true
+    prediction_type: epsilon
+    variance_type: fixed_small
+    beta_start: 0.0001
+    beta_end: 0.02
+  
+  # Inference steps (100 for DDPM)
+  num_inference_steps: 100
+
+# === Optimizer (Paper Settings) ===
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+# === EMA ===
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+# === Training (Paper: 3050 epochs) ===
+training:
+  device: cuda:0
+  seed: 42
+  debug: false
+  resume: true
+  num_epochs: 3050
+  gradient_accumulate_every: 1
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  use_ema: true
+  freeze_encoder: false
+  rollout_every: 50
+  checkpoint_every: 50
+  val_every: 1
+  sample_every: 5
+  max_train_steps: null
+  max_val_steps: null
+  tqdm_interval_sec: 1.0
+
+# === DataLoader ===
+dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: true
+  pin_memory: true
+  persistent_workers: false
+
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: false
+  pin_memory: true
+  persistent_workers: false
+
+# === Checkpointing ===
+checkpoint:
+  topk:
+    monitor_key: test_mean_score
+    mode: max
+    k: 3
+    format_str: 'epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt'
+  save_last_ckpt: true
+  save_last_snapshot: false
+
+# === Logging ===
+logging:
+  project: dpfm_pusht_experiments
+  group: ddpm_baselines
+  name: '${exp_name}_seed${training.seed}'
+  resume: true
+  mode: online
+  tags:
+    - ddpm
+    - unet
+    - baseline
+    - pusht
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  wandb_name_base: '${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}'
+
+hydra:
+  job:
+    chdir: true
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    subdir: ${hydra.job.num}
