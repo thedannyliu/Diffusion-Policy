@@ -243,9 +243,26 @@ class PushTImageRunner(BaseImageRunner):
                 all_dones[global_idx] = dones_list[local_idx]
 
                 info = infos_list[local_idx] if local_idx < len(infos_list) else dict()
-                block_traj = np.array(info.get('block_pose', []))
-                agent_traj = np.array(info.get('pos_agent', []))
-                coverage_traj = np.array(info.get('coverage', []))
+                
+                # Convert trajectory lists to numpy arrays
+                # Each info field is a list of values from each step
+                block_pose_list = info.get('block_pose', [])
+                agent_pos_list = info.get('pos_agent', [])
+                coverage_list = info.get('coverage', [])
+                goal_pose_list = info.get('goal_pose', [])
+                
+                # Stack into arrays if we have data
+                if len(block_pose_list) > 0:
+                    block_traj = np.stack(block_pose_list, axis=0)  # [T, 3]
+                else:
+                    block_traj = np.array([])
+                    
+                if len(agent_pos_list) > 0:
+                    agent_traj = np.stack(agent_pos_list, axis=0)  # [T, 2]
+                else:
+                    agent_traj = np.array([])
+                    
+                coverage_traj = np.array(coverage_list) if len(coverage_list) > 0 else np.array([])
 
                 all_coverages[global_idx] = coverage_traj
                 all_block_trajectories[global_idx] = block_traj
@@ -255,13 +272,14 @@ class PushTImageRunner(BaseImageRunner):
                 all_step_counts[global_idx] = len(rewards_list[local_idx])
 
                 # Final distance between block center and goal center
-                if block_traj.shape[0] > 0 and isinstance(info.get('goal_pose', None), (list, np.ndarray)):
-                    goal_pose = np.array(info['goal_pose'])
-                    # Use last block pose
-                    block_final = block_traj[-1]
-                    all_final_distances[global_idx] = np.linalg.norm(
-                        block_final[:2] - goal_pose[:2]
-                    )
+                # goal_pose is the same for all steps, take the first one
+                if block_traj.shape[0] > 0 and len(goal_pose_list) > 0:
+                    goal_pose = np.array(goal_pose_list[0])  # [3] - x, y, theta
+                    # Use last block pose position (x, y)
+                    block_final = block_traj[-1, :2]  # [2]
+                    all_final_distances[global_idx] = float(np.linalg.norm(
+                        block_final - goal_pose[:2]
+                    ))
                 else:
                     all_final_distances[global_idx] = np.nan
         # clear out video buffer
@@ -368,16 +386,26 @@ class PushTImageRunner(BaseImageRunner):
                     break
                 block_traj = all_block_trajectories[idx]
                 agent_traj = all_agent_trajectories[idx]
+                # Check for valid trajectory data
                 if block_traj is None or agent_traj is None:
                     continue
+                if not isinstance(block_traj, np.ndarray) or block_traj.size == 0:
+                    continue
+                if not isinstance(agent_traj, np.ndarray) or agent_traj.size == 0:
+                    continue
+                if block_traj.ndim < 2 or agent_traj.ndim < 2:
+                    continue
+                    
                 seed = self.env_seeds[idx]
 
                 fig, ax = plt.subplots(figsize=(4, 4))
-                ax.plot(block_traj[:, 0], block_traj[:, 1], '-o', label='block')
-                ax.plot(agent_traj[:, 0], agent_traj[:, 1], '-x', label='agent')
+                ax.plot(block_traj[:, 0], block_traj[:, 1], '-o', markersize=2, label='block')
+                ax.plot(agent_traj[:, 0], agent_traj[:, 1], '-x', markersize=2, label='agent')
                 ax.set_title(f'Test trajectory (seed={seed})')
                 ax.set_xlabel('x')
                 ax.set_ylabel('y')
+                ax.set_xlim(0, 512)
+                ax.set_ylim(0, 512)
                 ax.set_aspect('equal', 'box')
                 ax.legend()
                 fig.tight_layout()
@@ -389,8 +417,10 @@ class PushTImageRunner(BaseImageRunner):
 
                 log_data[f'test/trajectory_plot_{seed}'] = wandb.Image(str(fig_path))
                 plot_count += 1
-        except Exception:
+        except Exception as e:
             # Do not fail evaluation if plotting fails (e.g., no DISPLAY)
+            import traceback
+            traceback.print_exc()
             pass
 
         return log_data
