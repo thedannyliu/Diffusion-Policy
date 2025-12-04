@@ -170,9 +170,10 @@ class FlowMatchingTransformerHybridImagePolicy(BaseImagePolicy):
         )
 
         # Create Euler sampler for FM inference
+        # Note: sigma_min is stored but not used by EulerSampler currently
+        self.sigma_min = sigma_min
         self.sampler = EulerSampler(
-            num_steps=num_inference_steps,
-            sigma_min=sigma_min
+            num_steps=num_inference_steps
         )
 
         self.obs_encoder = obs_encoder
