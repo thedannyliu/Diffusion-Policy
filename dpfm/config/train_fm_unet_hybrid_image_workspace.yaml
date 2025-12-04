@@ -145,7 +145,7 @@ checkpoint:
 
 # === Logging (WandB online with detailed tracking) ===
 logging:
-  project: dpfm_pusht_v2
+  project: dpfm_pusht_ablation
   group: ${exp_name}
   name: '${exp_name}_step${policy.num_inference_steps}_seed${training.seed}'
   resume: true

@@ -119,12 +119,53 @@ Ablation configs follow pattern:
 ## WandB Logging
 
 All experiments logged to WandB with:
-- Project: `diffusion-policy-fm`
-- Entity: (as configured)
-- Group: `ablation-{experiment_type}`
+- Project: `dpfm_pusht_ablations` (unified for all future runs)
+- Legacy Projects: `dpfm_pusht_v2` (FM), `dpfm_pusht_experiments` (DDPM)
+- Entity: `danny010324`
 
-Tags:
-- `baseline` / `ablation`
-- `ddpm` / `fm`
-- `unet` / `transformer`
-- `pusht`
+Naming Convention:
+- `{exp_name}_step{N}_seed{S}` - e.g., `fm_unet_step4_seed42`
+
+---
+
+## Experiment Status (Updated: 2025-01-15)
+
+### Phase 1: Running
+
+| Job ID | Experiment | Config | Node | Status |
+|--------|------------|--------|------|--------|
+| 2526314 | DDPM UNet Baseline | `train_ddpm_unet_hybrid_pusht.yaml` | atl1-1-03-004-29-0 | ✅ Running |
+| 2525656 | FM UNet Baseline | `train_fm_unet_hybrid_image_workspace.yaml` | atl1-1-03-007-29-0 | ✅ Running |
+| 2525657 | FM Transformer Baseline | `train_fm_transformer_hybrid_image_workspace.yaml` | atl1-1-03-007-31-0 | ✅ Running |
+| 2525658 | FM Steps=4 | `train_fm_unet_hybrid_image_workspace.yaml` | atl1-1-01-010-29-0 | ✅ Running |
+| 2525659 | FM Steps=8 | `train_fm_unet_hybrid_image_workspace.yaml` | atl1-1-01-010-31-0 | ✅ Running |
+| 2525660 | FM Steps=16 | `train_fm_unet_hybrid_image_workspace.yaml` | atl1-1-01-010-33-0 | ✅ Running |
+
+### Phase 2: Pending (After Phase 1 Completion)
+
+| Experiment | Priority | Est. Time |
+|------------|----------|-----------|
+| **Ablation B (LR)**: LR 1e-3, 5e-5 | High | ~10hr each |
+| **Ablation C (Seeds)**: seed 123, 456 | Medium | ~10hr each |
+| **Ablation D (Data)**: 50%, 25% | Low | ~10hr each |
+
+### WandB Dashboard Links
+
+- **FM Experiments**: https://wandb.ai/danny010324/dpfm_pusht_v2
+- **DDPM Experiments**: https://wandb.ai/danny010324/dpfm_pusht_experiments
+- **Future Unified**: https://wandb.ai/danny010324/dpfm_pusht_ablations
+
+---
+
+## Troubleshooting
+
+### Known Issues
+
+1. **CUDA ECC Error**: Nodes `atl1-1-03-004-31-0` and `atl1-1-01-010-35-0` have hardware issues
+   - Solution: Add `#SBATCH --exclude=atl1-1-03-004-31-0,atl1-1-01-010-35-0` to job scripts
+
+2. **Memory Constraint**: Original 384GB per job caused single-job-per-node scheduling
+   - Solution: Reduced to 64GB per job
+
+3. **Job Limit**: Max 5 running jobs per user
+   - Solution: Phase-based submission strategy

@@ -133,9 +133,9 @@ checkpoint:
 
 # === Logging ===
 logging:
-  project: dpfm_pusht_experiments
-  group: ddpm_baselines
-  name: '${exp_name}_seed${training.seed}'
+  project: dpfm_pusht_ablation
+  group: ${exp_name}
+  name: '${exp_name}_step100_seed${training.seed}'
   resume: true
   mode: online
   tags:
