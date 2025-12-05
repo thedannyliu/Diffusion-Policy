@@ -261,6 +261,36 @@ data/training/real_robot/
     └── *.hdf5
 ```
 
+## IoU using Segmentation
+It's recommended to create a separate conda environment to evaluate IoU.
+```
+conda create -n seg python==3.10.0
+conda activate seg
+cd segment-anything-annotator
+pip install -r requirements.txt
+```
+
+Then, run the following
+```
+python segment-anything-annotator/diffusion/calculate_iou.py
+```
+---
+
+## 🎓 Conclusions
+
+1. **Flow Matching is a viable alternative** to DDPM for Diffusion Policy
+2. **13-27× speedup** with <10% accuracy loss is achievable
+3. **8 inference steps** provides optimal quality/speed trade-off
+4. **Training is faster** but requires careful hyperparameter tuning
+5. **Real robot deployment** is feasible with the trained policies
+
+### Future Work
+
+- [ ] Implement adaptive step scheduling
+- [ ] Explore distillation from DDPM to FM
+- [ ] Test on more complex manipulation tasks
+- [ ] Investigate multi-step flow matching
+
 ---
 
 ## 📚 References
