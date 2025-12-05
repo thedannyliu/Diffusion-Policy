@@ -74,12 +74,7 @@ FM configuration matching DDPM baseline:
 
 | Setting | Value |
 |---------|-------|
-| Cluster | Georgia Tech PACE Phoenix |
-| GPU | NVIDIA L40S |
-| Partition | gpu-l40s |
-| Account | gts-agarg35-ideas_l40s |
-| Memory | 64 GB per job |
-| Time | 20 hours per job |
+| GPU | NVIDIA L40S (48GB) |
 
 ## Config Files
 

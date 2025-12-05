@@ -9,8 +9,8 @@
 #SBATCH --partition=gpu-l40s
 #SBATCH --account=gts-agarg35-ideas_l40s
 #SBATCH --qos=inferno
-#SBATCH --output=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval_all_%j.out
-#SBATCH --error=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval_all_%j.err
+#SBATCH --output=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval/eval_all_%j.out
+#SBATCH --error=/storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/logs/eval/eval_all_%j.err
 
 # ============================================================
 # Batch Evaluation Script for All Best Checkpoints

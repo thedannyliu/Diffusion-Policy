@@ -25,17 +25,17 @@ Flow Matching learns a direct velocity field $v_\theta(x_t, t)$ to transport noi
 
 ## 📊 Main Results
 
-| Method | Steps | Score | Latency (p50) | Training Time | Speedup |
-|--------|-------|-------|---------------|---------------|---------|
-| **DDPM Baseline** | 100 | **0.869** | 650.0 ms | 19.4 hr | 1.0× |
-| FM (16 steps) | 16 | 0.844 | 150.7 ms | 8.9 hr | **4.3×** |
-| FM (lr=5e-5) | 4 | 0.820 | 24.5 ms | 6.8 hr | **26.5×** |
-| FM (8 steps) | 8 | 0.801 | 48.0 ms | 8.0 hr | **13.5×** |
-| FM (4 steps) | 4 | 0.777 | 24.5 ms | 6.5 hr | **26.5×** |
+| Method | Steps | Test Score | Latency (p50) | Training Time | Speedup |
+|--------|-------|------------|---------------|---------------|--------|
+| **DDPM Baseline** | 100 | **0.816** | 635.0 ms | 19.4 hr | 1.0× |
+| FM (lr=5e-5) | 4 | 0.798 | 23.1 ms | 6.8 hr | **27.5×** |
+| FM (16 steps) | 16 | 0.794 | 90.4 ms | 8.9 hr | **7.0×** |
+| FM (8 steps) | 8 | 0.769 | 45.3 ms | 8.0 hr | **14.0×** |
+| FM (4 steps) | 4 | 0.667 | 23.1 ms | 6.5 hr | **27.5×** |
 
-**Best Speed-Quality Trade-off**: FM with 16 steps achieves 97% of DDPM performance with 4.3× speedup.
+**Best Speed-Quality Trade-off**: FM with lr=5e-5 achieves 98% of DDPM performance with 27× speedup.
 
-**Best Real-time Performance**: FM with 4 steps and lr=5e-5 achieves 94% of DDPM with 26.5× speedup.
+**Best Real-time Performance**: FM with 4 steps enables 40+ Hz control for real-time robotics.
 
 For detailed ablation results, see [docs/results.md](docs/results.md).
 
@@ -64,9 +64,10 @@ Diffusion-Policy-Flow-Matching/
 │   ├── submit_experiments.sh     # Submit ablation experiments
 │   └── eval.sh                   # Evaluation script
 ├── results/                      # Evaluation outputs
-│   ├── eval_baseline/            # DDPM results + videos
-│   ├── eval_fm_4step/            # FM 4-step results
-│   └── eval_fm_step16/           # FM 16-step results
+│   ├── ddpm_unet_s42/            # DDPM baseline results
+│   ├── fm_steps16/               # FM 16-step results
+│   ├── fm_lr5e-5/                # FM with optimized LR
+│   └── ...                       # Other experiments
 ├── logs/                         # Training logs
 │   └── experiments/              # SLURM job logs
 └── docs/                         # Documentation

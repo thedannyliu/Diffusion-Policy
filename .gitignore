@@ -182,3 +182,6 @@ temp/
 # results/ - contains evaluation results
 # docs/ - contains documentation
 # scripts/ - contains submission scripts
+
+# Private planning documents
+docs/master_plan.md
