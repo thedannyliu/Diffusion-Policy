@@ -1,4 +1,4 @@
-# Diffusion-Based Visuomotor Policy Learning: Reproduction and Efficiency Analysis
+# Diffusion Policy: Reproduction and Real-World Validation
 
 **CS 8803 Deep Reinforcement Learning - Final Project**
 **Georgia Institute of Technology - Prof. Animesh Garg**
@@ -6,53 +6,72 @@
 [![Python 3.9](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/release/python-390/)
 [![PyTorch 2.0](https://img.shields.io/badge/pytorch-2.0-red.svg)](https://pytorch.org/)
 
-## Abstract
+## Overview
 
-We present a rigorous empirical study of diffusion-based generative modeling for visuomotor policy learning, building upon the Diffusion Policy framework (Chi et al., RSS 2023). This work investigates the computational and performance trade-offs in action-space diffusion models for robotic manipulation through three principal contributions:
+This project presents a comprehensive empirical study of **Diffusion Policy** (Chi et al., RSS 2023) for visuomotor policy learning in robotic manipulation. We provide a faithful reproduction of the original method, validate it extensively in real-world scenarios, and introduce an efficient Flow Matching variant as an optional improvement.
 
-**First**, we provide a faithful reproduction of the DDPM-based Diffusion Policy with UNet architecture on the PushT benchmark, establishing properly aligned quantitative metrics (test score, target coverage, success rate) that enable meaningful comparison with published results. Our reproduction achieves 0.816 test score with 0.781 target coverage, validating the baseline implementation.
+### Three Principal Contributions
 
-**Second**, we introduce Flow Matching as an alternative continuous-time generative training objective while maintaining the identical UNet architecture and visual encoders. This architectural consistency enables direct comparison of training objectives, demonstrating that continuous-time optimal transport-based formulations achieve 98% of DDPM task performance while reducing inference latency by 27× (635ms → 24ms) and accelerating training convergence by 3×. The Flow Matching variant serves as a drop-in replacement for the DDPM objective, requiring only modification of the loss function and sampling procedure.
+**1. Baseline Reproduction & Validation**
+We faithfully reproduce the DDPM-based Diffusion Policy with UNet architecture on the PushT simulation benchmark, establishing properly aligned quantitative metrics (test score, target coverage, success rate). Our reproduction achieves **0.816 test score** with **0.781 target coverage**, validating the baseline implementation and providing a solid foundation for further work.
 
-**Third**, we conduct extensive real-world validation using the reproduced DDPM-based policy on a planar non-prehensile manipulation task with a UR10e robotic manipulator. Through systematic ablation studies across observation modalities (monocular vs. stereo), object geometries (cubic vs. spherical), and environmental perturbations, we establish the practical feasibility and limitation boundaries of diffusion-based visuomotor policies in physical systems, achieving 100% success on 32 interior workspace configurations.
+**2. Real-World Deployment & Ablation Studies**
+We conduct extensive real-world validation using a **UR10e robotic manipulator** on planar non-prehensile manipulation tasks. Through systematic ablation studies across observation modalities (monocular vs. stereo), object geometries (cube vs. sphere), and environmental perturbations, we establish practical feasibility boundaries of diffusion-based visuomotor policies. The two-camera stereo configuration achieves **100% success** across 32 interior workspace configurations for both object types.
 
-### Principal Findings
+**3. Flow Matching Extension (Optional Efficiency Improvement)**
+As an additional contribution, we introduce Flow Matching as an alternative continuous-time training objective while maintaining identical network architecture. This variant achieves **98% of baseline performance** while reducing inference latency by **27×** (635ms → 24ms) and accelerating training by **3×**, serving as a drop-in replacement requiring only loss function and sampling procedure modifications.
 
-**Simulation Results (PushT Benchmark):**
-- Reproduced DDPM baseline achieves 0.816 test score with 0.781 target coverage, maintaining 100% task success
-- Flow Matching attains 98% of DDPM performance (0.798 score, 0.761 coverage) while reducing inference latency by 27× (635ms → 24ms)
-- Training convergence accelerated by approximately 3× relative to standard DDPM
+### Key Findings
 
-**Real-World Deployment (Planar Pushing):**
-- Two-camera configuration achieves 100% success rate across 32 evaluation configurations for both rigid and spherical geometries
-- Policy exhibits robustness to moderate visual perturbations but degrades under substantial environmental clutter
-- Single-camera observations yield significant performance degradation, particularly for rotationally-symmetric objects (50% success for sphere)
+**Real-World Robot Deployment:**
+- Two-camera stereo configuration achieves **100% success** across 32 interior workspace positions for both cube and sphere objects
+- **Stereo vision is essential**: Single-camera setup degrades to 50% success for spheres and 93.8% for cubes
+- Policy demonstrates robustness to moderate visual perturbations but degrades under heavy environmental clutter
+- Cube manipulation requires more precise angular alignment than sphere (84.2% vs 57.9% success on boundary configurations)
+
+**Simulation Reproduction (PushT Benchmark):**
+- Successfully reproduced DDPM Diffusion Policy: **0.816 test score**, **0.781 target coverage**, 100% task success
+- Validated metrics align with original published results, confirming faithful implementation
+
+**Flow Matching Efficiency Gains (Optional):**
+- Achieves 98% of DDPM performance (0.798 score, 0.761 coverage) with only 4 ODE integration steps
+- **27× faster inference** (635ms → 24ms) enabling real-time control at 40+ Hz
+- **3× faster training** convergence compared to standard DDPM
 
 ---
 
 ## Main Results
 
-### Simulation: PushT Benchmark
-
-| Method | Steps | Test Score | Coverage | Latency (p50) | Speedup |
-|--------|-------|------------|----------|---------------|---------|
-| **DDPM (reproduced)** | 100 | **0.816** | **0.781** | 635.0 ms | 1.0× |
-| FM (lr=5e-5) | 4 | 0.798 | 0.761 | 23.1 ms | **27.5×** |
-| FM (16 steps) | 16 | 0.794 | 0.758 | 90.4 ms | 7.0× |
-| FM (8 steps) | 8 | 0.769 | 0.735 | 45.3 ms | 14.0× |
-
-*All configurations achieve 100% task completion under the evaluation protocol.* Flow Matching with optimized learning rate (5×10⁻⁵) recovers 98% of DDPM performance while providing 27× computational speedup.
-
 ### Real-World: Planar Non-Prehensile Manipulation
 
-| Observation Configuration | Object Geometry | Easy Configurations | Hard Configurations | Overall |
-|--------------------------|-----------------|--------------------|--------------------|---------|
-| Two cameras (stereo) | Cube | 32/32 (100%) | 16/19 (84.2%) | 94.1% |
-| Two cameras (stereo) | Sphere | 32/32 (100%) | 11/19 (57.9%) | 84.3% |
+| Observation Configuration | Object Geometry | Easy Spots (32) | Hard Spots (18) | Overall |
+|--------------------------|-----------------|-----------------|-----------------|---------|
+| **Two cameras (stereo)** | **Cube** | **32/32 (100%)** | 16/19 (84.2%) | 94.1% |
+| **Two cameras (stereo)** | **Sphere** | **32/32 (100%)** | 11/19 (57.9%) | 84.3% |
 | Single camera (monocular) | Cube | 30/32 (93.8%) | — | — |
 | Single camera (monocular) | Sphere | 16/32 (50.0%) | — | — |
 
-**Critical Finding**: Stereo observation is necessary for reliable visuomotor control. Policies demonstrate robustness to moderate perceptual noise but exhibit degraded performance under severe environmental clutter.
+**Key Insight**: Stereo observation is essential for reliable visuomotor control in contact-rich manipulation. Single-camera configurations suffer catastrophic performance degradation for rotationally-symmetric objects (sphere: 50% vs 100% success).
+
+**Hardware**: UR10e robot with Robotiq 85 gripper, dual Intel RealSense D435 cameras, custom-designed task board with 3D-printed fixtures, SpaceMouse teleoperation for 100 demonstrations per task.
+
+### Simulation: PushT Benchmark Reproduction
+
+**DDPM Baseline (Reproduced):**
+- Test Score: **0.816** | Coverage: **0.781** | Success: **100%**
+- Inference: 635ms per step (100 denoising steps)
+- Training: ~19 hours on A40 GPU
+
+**Flow Matching Variant (Optional Efficiency Improvement):**
+
+| Configuration | Steps | Test Score | Coverage | Latency (p50) | Speedup |
+|--------------|-------|------------|----------|---------------|---------|
+| **FM (lr=5e-5)** | **4** | **0.798** | **0.761** | **23.1 ms** | **27.5×** |
+| FM (16 steps) | 16 | 0.794 | 0.758 | 90.4 ms | 7.0× |
+| FM (8 steps) | 8 | 0.769 | 0.735 | 45.3 ms | 14.0× |
+| FM (default lr) | 4 | 0.667 | 0.637 | 23.1 ms | 27.5× |
+
+*Flow Matching with optimized learning rate (5×10⁻⁵) achieves 98% of DDPM performance while enabling real-time control at 40+ Hz.*
 
 For detailed ablation results, see [docs/results.md](docs/results.md).
 
@@ -63,33 +82,38 @@ For detailed ablation results, see [docs/results.md](docs/results.md).
 ```
 Diffusion-Policy/
 ├── README.md                     # This document
+├── report.pdf                    # Full technical report
 ├── requirements.txt              # Python dependencies
-├── notebooks/
-│   └── results_analysis.ipynb    # Quantitative analysis and visualization
-├── dpfm/                         # Flow Matching implementation
-│   ├── config/                   # Hydra configuration files
-│   │   ├── train_fm_unet_hybrid_image_workspace.yaml
-│   │   ├── train_ddpm_unet_hybrid_pusht.yaml
-│   │   └── task/pusht_image.yaml
+│
+├── diffusion_policy/             # Core implementation (DDPM baseline)
+│   ├── policy/                   # Policy architectures (UNet, Transformer)
+│   ├── model/                    # Vision encoders, diffusion models
+│   ├── dataset/                  # Data loading and preprocessing
+│   └── ...                       # Training, evaluation utilities
+│
+├── dpfm/                         # Extension: Flow Matching variant
+│   ├── config/                   # Training configurations
+│   │   ├── train_ddpm_unet_hybrid_pusht.yaml      # DDPM baseline config
+│   │   └── train_fm_unet_hybrid_image_workspace.yaml  # Flow Matching config
 │   ├── loss/                     # Flow matching loss (CFM)
 │   ├── sampler/                  # Euler ODE sampler
 │   ├── policy/                   # FM policy wrapper
-│   ├── train.py                  # Training entry point
-│   └── eval.py                   # Evaluation entry point
-├── diffusion_policy/             # Original Diffusion Policy (baseline)
-├── scripts/                      # SLURM job scripts
-│   ├── submit_experiments.sh     # Submit ablation experiments
-│   └── eval.sh                   # Evaluation script
+│   ├── train.py                  # Training script
+│   └── eval.py                   # Evaluation script
+│
+├── data/                         # Datasets (download separately)
+│   ├── training/
+│   │   ├── pusht/                # PushT simulation dataset
+│   │   ├── two_cameras_cube/     # Real robot cube demos
+│   │   └── two_cameras_sphere/   # Real robot sphere demos
+│   └── evaluations/              # Evaluation rollout data
+│
+├── notebooks/
+│   └── results_analysis.ipynb    # Result visualization and analysis
+│
+├── scripts/                      # Job submission scripts
 ├── results/                      # Evaluation outputs
-│   ├── ddpm_unet_s42/            # DDPM baseline results
-│   ├── fm_steps16/               # FM 16-step results
-│   ├── fm_lr5e-5/                # FM with optimized LR
-│   └── ...                       # Other experiments
-├── logs/                         # Training logs
-│   └── experiments/              # SLURM job logs
-└── docs/                         # Documentation
-    ├── results.md                # Detailed experimental results
-    └── ablation_design.md        # Ablation study design
+└── docs/                         # Additional documentation
 ```
 
 ---
@@ -157,19 +181,20 @@ See **[data/README.md](data/README.md)** for detailed setup instructions and plo
 export PYTHONPATH="${PWD}:${PWD}/diffusion_policy:$PYTHONPATH"
 cd diffusion_policy
 
-# Train Flow Matching policy (4 inference steps, default lr=1e-4)
-python dpfm/train.py --config-name=train_fm_unet_hybrid_image_workspace \
-    policy.num_inference_steps=4 \
+# Train DDPM baseline (original Diffusion Policy, 100 inference steps)
+python dpfm/train.py --config-name=train_ddpm_unet_hybrid_pusht \
     training.seed=42
 
-# Train Flow Matching with optimized learning rate
+# OPTIONAL: Train Flow Matching variant for faster inference
+# Flow Matching with optimized learning rate (recommended)
 python dpfm/train.py --config-name=train_fm_unet_hybrid_image_workspace \
     policy.num_inference_steps=4 \
     optimizer.lr=5e-5 \
     training.seed=42
 
-# Train DDPM baseline (100 inference steps)
-python dpfm/train.py --config-name=train_ddpm_unet_hybrid_pusht \
+# Flow Matching with default settings
+python dpfm/train.py --config-name=train_fm_unet_hybrid_image_workspace \
+    policy.num_inference_steps=4 \
     training.seed=42
 ```
 
@@ -195,65 +220,64 @@ jupyter notebook notebooks/results_analysis.ipynb
 
 ## Method
 
-We implement the UNet-based Diffusion Policy architecture and systematically compare two generative modeling objectives for action-space generation. Crucially, both formulations share identical network architectures, visual encoders, and conditioning mechanisms—only the training loss and sampling procedures differ. This design enables direct attribution of performance differences to the choice of generative objective rather than architectural variations.
+We implement and reproduce the **Diffusion Policy** architecture (Chi et al., RSS 2023) for visuomotor control, deploying it on both simulation and real-world robotic manipulation tasks. Additionally, we introduce an optional **Flow Matching** variant that achieves comparable performance with significantly reduced computational cost.
 
-### Shared Architecture (Both Methods)
+### Core Architecture: Diffusion Policy (DDPM)
 
-Both DDPM and Flow Matching utilize the following components:
+The baseline method uses a UNet-based conditional diffusion model for action-space generation:
+
+**Architecture Components:**
 - **Vision Encoder**: ResNet18 with spatial softmax pooling (trained end-to-end, no pretraining)
-- **State Encoder**: Low-dimensional MLP for proprioceptive observations
-- **Temporal Backbone**: 1D Convolutional UNet over action sequences
-- **Conditioning**: Feature-wise Linear Modulation (FiLM) to inject observation context
+- **State Encoder**: Low-dimensional MLP for proprioceptive observations (robot joint states)
+- **Temporal Backbone**: 1D Convolutional UNet operating over action sequences
+- **Conditioning**: Feature-wise Linear Modulation (FiLM) to inject observation context into denoising
 - **Action Representation**: Position control with prediction horizon=16, action horizon=8
 
-### Training Objective 1: DDPM (Baseline Reproduction)
-
-The original Diffusion Policy formulation employs discrete-time denoising:
-- Network parameterization: Predict noise $\epsilon_\theta(x_t, t, o)$ at discrete diffusion timesteps
+**Training Objective (DDPM):**
+- Network learns to predict noise $\epsilon_\theta(x_t, t, o)$ at discrete diffusion timesteps
 - Training loss: $\mathcal{L}_{\text{DDPM}} = \mathbb{E}_{x_0, \epsilon, t}\|\epsilon - \epsilon_\theta(\sqrt{\bar{\alpha}_t}x_0 + \sqrt{1-\bar{\alpha}_t}\epsilon, t, o)\|^2$
 - Inference: Iterative denoising via $x_{t-1} = \alpha(x_t - \gamma\epsilon_\theta(x_t,t,o)) + \mathcal{N}(0,\sigma^2I)$
-- Requires 100 denoising steps for convergence at evaluation time
+- Requires 100 denoising steps for high-quality action generation
 
-### Training Objective 2: Flow Matching (Our Extension)
+**Implementation Details:**
+- Position control (not velocity) for stability
+- AdamW optimizer with cosine learning rate schedule
+- Exponential Moving Average (EMA) for stable policy evaluation
+- Training time: ~12-19 hours on A40/L40S GPU
 
-We introduce continuous-time flow matching as an alternative, maintaining the same UNet backbone:
-- Network parameterization: Predict velocity $v_\theta(x_t, t, o)$ over the action manifold
+### Optional Extension: Flow Matching
+
+As an efficiency improvement, we introduce continuous-time flow matching while maintaining the **identical UNet architecture**:
+
+**Modified Training Objective:**
+- Network predicts velocity field $v_\theta(x_t, t, o)$ over action manifold instead of noise
 - Training loss: $\mathcal{L}_{\text{FM}} = \mathbb{E}_{x_1, \epsilon, t}\|v_\theta((1-t)\epsilon + tx_1, t, o) - (x_1 - \epsilon)\|^2$
 - Inference: Deterministic ODE integration via $x_{t+\Delta t} = x_t + v_\theta(x_t, t, o)\Delta t$
-- Convergence achieved with only 4-16 Euler integration steps
+- Only 4-16 Euler integration steps needed (vs 100 for DDPM)
 
-**Key Insight**: Flow Matching serves as a drop-in replacement for DDPM, requiring only modification of the loss function computation during training and replacement of the iterative denoising sampler with an ODE integrator at inference. The UNet architecture, observation encoders, and conditioning mechanisms remain unchanged.
+**Key Insight**: Flow Matching is a drop-in replacement requiring only loss function and sampling procedure changes—the UNet architecture, visual encoders, and conditioning mechanisms remain identical to DDPM.
 
-**Comparison:**
+**Performance Comparison:**
 
-| Aspect | DDPM | Flow Matching |
-|--------|------|---------------|
+| Aspect | DDPM (Baseline) | Flow Matching (Ours) |
+|--------|-----------------|----------------------|
 | Training target | Predict noise $\epsilon$ | Predict velocity $v$ |
-| Sampling | 100 discrete steps | 4-16 continuous steps |
-| Inference latency | ~635 ms | ~23-90 ms |
+| Inference steps | 100 denoising steps | 4-16 ODE steps |
+| Inference latency | ~635 ms/step | ~23-90 ms/step |
 | Training time | ~19 hours | ~6-9 hours |
-
-### Architecture
-
-Both methods use the same **UNet-based** architecture:
-- ResNet18 vision encoder (no pretraining)
-- Low-dimensional state encoder
-- 1D Convolutional UNet for action sequences
-- FiLM conditioning for observation integration
-
-**Key implementation details:**
-- Position control (not velocity)
-- Prediction horizon: 16 steps, Action horizon: 8 steps
-- AdamW optimizer with cosine LR schedule
-- EMA (exponential moving average) for stable evaluation
+| PushT test score | 0.816 | 0.798 (98% of baseline) |
 
 ---
 
 ## Experimental Ablations
 
-We conduct systematic ablation studies to isolate the impact of key design decisions on both computational efficiency and task performance. All experiments are performed under controlled conditions with identical hyperparameters unless explicitly varied.
+We conduct systematic ablation studies to evaluate both the reproduced DDPM baseline and the Flow Matching extension. All experiments use controlled conditions with identical hyperparameters unless explicitly varied.
 
-### 1. ODE Integration Steps (Flow Matching)
+### Flow Matching Ablations (Simulation Only)
+
+The following ablations study the Flow Matching variant in PushT simulation. Real-world experiments use the DDPM baseline.
+
+#### 1. ODE Integration Steps
 
 | Integration Steps | Test Score | Coverage | Latency (ms) | Relative Speedup |
 |------------------|------------|----------|--------------|------------------|
@@ -264,7 +288,7 @@ We conduct systematic ablation studies to isolate the impact of key design decis
 
 **Analysis**: Flow Matching exhibits relative insensitivity to the number of Euler integration steps across the 4-16 range, with performance variance <4%. This suggests that the learned velocity field provides sufficient smoothness for accurate trajectory integration with minimal discretization. The optimal operating point (4 steps) achieves 98% of DDPM performance while enabling real-time control at 40+ Hz.
 
-### 2. Learning Rate Hyperparameter
+#### 2. Learning Rate Sensitivity
 
 | Learning Rate | Test Score | Coverage | Training Stability |
 |--------------|------------|----------|-------------------|
@@ -274,7 +298,7 @@ We conduct systematic ablation studies to isolate the impact of key design decis
 
 **Analysis**: Flow Matching demonstrates marked sensitivity to learning rate selection, with a 20% performance improvement under conservative optimization (5×10⁻⁵). This contrasts with DDPM's relative robustness to learning rate variation, suggesting that continuous-time formulations require more careful tuning of the optimization landscape. Aggressive learning rates (1×10⁻³) induce training instability without performance gains.
 
-### 3. Network Architecture
+#### 3. Architecture Comparison (UNet vs Transformer)
 
 | Backbone | Training Objective | Test Score | Convergence |
 |----------|-------------------|------------|-------------|
@@ -284,7 +308,11 @@ We conduct systematic ablation studies to isolate the impact of key design decis
 
 **Analysis**: The convolutional UNet architecture with Feature-wise Linear Modulation (FiLM) conditioning demonstrates consistent efficacy across both DDPM and Flow Matching objectives. In stark contrast, Transformer-based temporal models fail catastrophically under Flow Matching training (0.114 test score ≈ random policy). This architectural dependency suggests that local temporal inductive biases inherent to convolutions may be crucial for learning smooth velocity fields in action space.
 
-### 4. Observation Modality (Real-World)
+### Real-World Ablations (DDPM Baseline)
+
+The following ablations evaluate the reproduced DDPM Diffusion Policy on real robot hardware (UR10e).
+
+#### 4. Observation Modality: Monocular vs Stereo
 
 | Visual Configuration | Cube Success | Sphere Success | Geometric Robustness |
 |---------------------|--------------|----------------|---------------------|
@@ -388,21 +416,36 @@ python segment-anything-annotator/diffusion/calculate_iou.py
 
 ## Conclusions
 
-### Principal Findings
+### Summary of Contributions
 
-This empirical investigation establishes several key insights regarding diffusion-based visuomotor policy learning:
+This work presents a comprehensive empirical study of Diffusion Policy through three main contributions:
 
-**Reproducibility and Metric Alignment**: We successfully reproduced the DDPM-based Diffusion Policy with UNet architecture on the PushT benchmark, achieving a test score of 0.816 with target coverage of 0.781 and 100% task completion rate. This reproduction, aligned with the original evaluation protocol, provides a validated baseline implementation that serves as the foundation for both our Flow Matching extension and real-world deployment.
+**1. Faithful Baseline Reproduction**
 
-**Computational Efficiency via Flow Matching**: Building upon our reproduced DDPM baseline, we introduce continuous-time Flow Matching as an alternative training objective using the identical UNet architecture. This architectural consistency enables direct comparison, demonstrating that optimal transport-based formulations achieve substantial computational gains (27× inference speedup, 3× training acceleration) while maintaining 98% of DDPM task performance in simulation. The Flow Matching extension requires only loss function modification, serving as a drop-in replacement that suggests the discrete-time diffusion framework may be over-parameterized for action-space generation.
+We successfully reproduced the DDPM-based Diffusion Policy with UNet architecture on the PushT benchmark, achieving **test score 0.816** with **target coverage 0.781** and 100% success rate. This reproduction, aligned with the original evaluation protocol and metrics, provides a validated baseline that served as the foundation for real-world deployment and comparative analysis.
 
-**Observation Modality Requirements**: Real-world deployment reveals that stereo visual observation is not merely beneficial but necessary for reliable visuomotor control, particularly for objects with rotational symmetries. Monocular configurations exhibit catastrophic performance degradation (50% success for spherical objects), highlighting the critical role of depth perception in contact-rich manipulation.
+**2. Extensive Real-World Validation**
 
-**Geometric Task Complexity**: Cubic object manipulation exhibits higher failure rates (84% vs. 100% success in boundary configurations) compared to spherical objects, attributable to the requirement for precise angular alignment during slot insertion. This observation suggests that diffusion policies may benefit from explicit geometric reasoning mechanisms.
+We conducted systematic real-world evaluation on a UR10e robotic manipulator performing planar non-prehensile manipulation with custom-designed hardware. Key findings:
 
-**Hyperparameter Sensitivity**: Flow Matching exhibits marked sensitivity to learning rate selection, with conservative values (5×10⁻⁵) yielding 20% performance improvement over standard DDPM settings (1×10⁻⁴). This suggests that the continuous-time formulation requires more careful optimization tuning than its discrete-time counterpart.
+- **Stereo vision is essential**: Two-camera configuration achieves 100% success on 32 interior workspace positions for both cube and sphere objects
+- **Monocular observation catastrophically degrades performance**: Single-camera setup drops to 50% success for spheres (vs 100% for stereo)
+- **Robustness to moderate perturbations**: Policy handles gripper appearance changes and limited clutter but degrades under heavy environmental disturbances
+- **Geometric complexity matters**: Cubes require more precise angular alignment than spheres (84% vs 58% success on boundary configurations)
 
-**Architectural Constraints**: The convolutional UNet backbone proves effective for both DDPM and Flow Matching objectives, while Transformer-based architectures fail to converge (0.114 test score). This architectural dependency warrants further investigation into inductive biases suitable for action-space generation.
+**3. Flow Matching Efficiency Improvement (Optional)**
+
+As an additional contribution, we introduce continuous-time Flow Matching as a drop-in replacement for DDPM, using the identical UNet architecture but replacing only the loss function and sampling procedure:
+
+- Achieves **98% of baseline performance** (0.798 vs 0.816 test score)
+- **27× faster inference** (24ms vs 635ms) enabling real-time control at 40+ Hz
+- **3× faster training** convergence
+- Demonstrates that discrete-time diffusion may be over-parameterized for action-space generation
+
+**Other Key Findings:**
+
+- **Architecture matters**: UNet succeeds for both DDPM and Flow Matching; Transformer fails catastrophically with Flow Matching (0.114 test score)
+- **Hyperparameter sensitivity**: Flow Matching requires careful learning rate tuning (5×10⁻⁵ optimal vs 1×10⁻⁴ default)
 
 ### Limitations and Future Research Directions
 
