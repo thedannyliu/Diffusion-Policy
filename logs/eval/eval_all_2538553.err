@@ -1,0 +1,289 @@
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Eval PushtImageRunner 1/1:   0%|          | 0/300 [00:00<?, ?it/s]/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torch/nn/modules/activation.py:1160: UserWarning: Converting mask without torch.bool dtype to bool; this will negatively affect performance. Prefer to use a boolean mask directly. (Triggered internally at ../aten/src/ATen/native/transformers/attention.cpp:150.)
+  return torch._native_multi_head_attention(
+Eval PushtImageRunner 1/1:  11%|█         | 32/300 [00:05<00:49,  5.42it/s]Eval PushtImageRunner 1/1:  24%|██▍       | 72/300 [00:11<00:35,  6.49it/s]Eval PushtImageRunner 1/1:  37%|███▋      | 112/300 [00:16<00:27,  6.90it/s]Eval PushtImageRunner 1/1:  51%|█████     | 152/300 [00:22<00:20,  7.10it/s]Eval PushtImageRunner 1/1:  64%|██████▍   | 192/300 [00:27<00:14,  7.21it/s]Eval PushtImageRunner 1/1:  77%|███████▋  | 232/300 [00:32<00:09,  7.29it/s]Eval PushtImageRunner 1/1:  91%|█████████ | 272/300 [00:38<00:03,  7.33it/s]                                                                            wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: Tracking run with wandb version 0.23.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_032906-pvkledeh
+wandb: 
+wandb: Run history:
+wandb:       inference_latency_ms ▁
+wandb:   inference_latency_p50_ms ▁
+wandb:   inference_latency_p95_ms ▁
+wandb:        test/final_distance ▁
+wandb:            test/mean_score ▁
+wandb:       test/mean_step_count ▁
+wandb: test/sim_max_reward_100000 ▁
+wandb: test/sim_max_reward_100001 ▁
+wandb: test/sim_max_reward_100002 ▁
+wandb: test/sim_max_reward_100003 ▁
+wandb:                        +49 ...
+wandb: 
+wandb: Run summary:
+wandb:       inference_latency_ms 57.66976
+wandb:   inference_latency_p50_ms 20.90681
+wandb:   inference_latency_p95_ms 21.04763
+wandb:        test/final_distance 226.58012
+wandb:            test/mean_score 0.11405
+wandb:       test/mean_step_count 300
+wandb: test/sim_max_reward_100000 0
+wandb: test/sim_max_reward_100001 0.16948
+wandb: test/sim_max_reward_100002 0
+wandb: test/sim_max_reward_100003 0
+wandb:                        +49 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_032906-pvkledeh
+wandb: Find logs at: ./wandb/offline-run-20251205_032906-pvkledeh/logs
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Eval PushtImageRunner 1/1:   0%|          | 0/300 [00:00<?, ?it/s]Eval PushtImageRunner 1/1:  13%|█▎        | 40/300 [00:05<00:38,  6.68it/s]Eval PushtImageRunner 1/1:  27%|██▋       | 80/300 [00:11<00:32,  6.85it/s]Eval PushtImageRunner 1/1:  40%|████      | 120/300 [00:17<00:25,  6.96it/s]Eval PushtImageRunner 1/1:  53%|█████▎    | 160/300 [00:22<00:19,  7.33it/s]Eval PushtImageRunner 1/1:  69%|██████▉   | 208/300 [00:27<00:11,  8.10it/s]Eval PushtImageRunner 1/1:  88%|████████▊ | 264/300 [00:32<00:04,  8.90it/s]                                                                            wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: Tracking run with wandb version 0.23.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_032959-wl7wtznv
+wandb: 
+wandb: Run history:
+wandb:       inference_latency_ms ▁
+wandb:   inference_latency_p50_ms ▁
+wandb:   inference_latency_p95_ms ▁
+wandb:        test/final_distance ▁
+wandb:            test/mean_score ▁
+wandb:       test/mean_step_count ▁
+wandb: test/sim_max_reward_100000 ▁
+wandb: test/sim_max_reward_100001 ▁
+wandb: test/sim_max_reward_100002 ▁
+wandb: test/sim_max_reward_100003 ▁
+wandb:                        +49 ...
+wandb: 
+wandb: Run summary:
+wandb:       inference_latency_ms 49.03816
+wandb:   inference_latency_p50_ms 45.33386
+wandb:   inference_latency_p95_ms 45.38685
+wandb:        test/final_distance 60.21713
+wandb:            test/mean_score 0.76865
+wandb:       test/mean_step_count 243.94
+wandb: test/sim_max_reward_100000 0.71206
+wandb: test/sim_max_reward_100001 0.9681
+wandb: test/sim_max_reward_100002 0
+wandb: test/sim_max_reward_100003 1
+wandb:                        +49 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_032959-wl7wtznv
+wandb: Find logs at: ./wandb/offline-run-20251205_032959-wl7wtznv/logs
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Eval PushtImageRunner 1/1:   0%|          | 0/300 [00:00<?, ?it/s]Eval PushtImageRunner 1/1:  13%|█▎        | 40/300 [00:05<00:37,  6.94it/s]Eval PushtImageRunner 1/1:  27%|██▋       | 80/300 [00:11<00:31,  7.03it/s]Eval PushtImageRunner 1/1:  40%|████      | 120/300 [00:16<00:25,  7.10it/s]Eval PushtImageRunner 1/1:  53%|█████▎    | 160/300 [00:22<00:19,  7.32it/s]Eval PushtImageRunner 1/1:  69%|██████▉   | 208/300 [00:27<00:11,  7.75it/s]Eval PushtImageRunner 1/1:  85%|████████▌ | 256/300 [00:32<00:05,  8.31it/s]                                                                            wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: Tracking run with wandb version 0.23.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033051-fija2dyg
+wandb: 
+wandb: Run history:
+wandb:       inference_latency_ms ▁
+wandb:   inference_latency_p50_ms ▁
+wandb:   inference_latency_p95_ms ▁
+wandb:        test/final_distance ▁
+wandb:            test/mean_score ▁
+wandb:       test/mean_step_count ▁
+wandb: test/sim_max_reward_100000 ▁
+wandb: test/sim_max_reward_100001 ▁
+wandb: test/sim_max_reward_100002 ▁
+wandb: test/sim_max_reward_100003 ▁
+wandb:                        +49 ...
+wandb: 
+wandb: Run summary:
+wandb:       inference_latency_ms 24.90497
+wandb:   inference_latency_p50_ms 23.10935
+wandb:   inference_latency_p95_ms 23.15222
+wandb:        test/final_distance 70.31261
+wandb:            test/mean_score 0.6663
+wandb:       test/mean_step_count 260.78
+wandb: test/sim_max_reward_100000 0.6286
+wandb: test/sim_max_reward_100001 0.18011
+wandb: test/sim_max_reward_100002 0
+wandb: test/sim_max_reward_100003 1
+wandb:                        +49 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033051-fija2dyg
+wandb: Find logs at: ./wandb/offline-run-20251205_033051-fija2dyg/logs
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Eval PushtImageRunner 1/1:   0%|          | 0/300 [00:00<?, ?it/s]Eval PushtImageRunner 1/1:  13%|█▎        | 40/300 [00:06<00:39,  6.54it/s]Eval PushtImageRunner 1/1:  27%|██▋       | 80/300 [00:12<00:33,  6.64it/s]Eval PushtImageRunner 1/1:  40%|████      | 120/300 [00:18<00:26,  6.68it/s]Eval PushtImageRunner 1/1:  53%|█████▎    | 160/300 [00:23<00:19,  7.03it/s]Eval PushtImageRunner 1/1:  69%|██████▉   | 208/300 [00:28<00:11,  7.73it/s]Eval PushtImageRunner 1/1:  88%|████████▊ | 264/300 [00:34<00:04,  8.52it/s]                                                                            wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: Tracking run with wandb version 0.23.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033143-yr5dsmmq
+wandb: 
+wandb: Run history:
+wandb:       inference_latency_ms ▁
+wandb:   inference_latency_p50_ms ▁
+wandb:   inference_latency_p95_ms ▁
+wandb:        test/final_distance ▁
+wandb:            test/mean_score ▁
+wandb:       test/mean_step_count ▁
+wandb: test/sim_max_reward_100000 ▁
+wandb: test/sim_max_reward_100001 ▁
+wandb: test/sim_max_reward_100002 ▁
+wandb: test/sim_max_reward_100003 ▁
+wandb:                        +49 ...
+wandb: 
+wandb: Run summary:
+wandb:       inference_latency_ms 92.21576
+wandb:   inference_latency_p50_ms 90.42568
+wandb:   inference_latency_p95_ms 90.62024
+wandb:        test/final_distance 56.06377
+wandb:            test/mean_score 0.79365
+wandb:       test/mean_step_count 242.38
+wandb: test/sim_max_reward_100000 0.46062
+wandb: test/sim_max_reward_100001 0.18011
+wandb: test/sim_max_reward_100002 1
+wandb: test/sim_max_reward_100003 0.9781
+wandb:                        +49 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033143-yr5dsmmq
+wandb: Find logs at: ./wandb/offline-run-20251205_033143-yr5dsmmq/logs
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Eval PushtImageRunner 1/1:   0%|          | 0/300 [00:00<?, ?it/s]Eval PushtImageRunner 1/1:  13%|█▎        | 40/300 [00:05<00:37,  6.93it/s]Eval PushtImageRunner 1/1:  27%|██▋       | 80/300 [00:11<00:31,  6.98it/s]Eval PushtImageRunner 1/1:  40%|████      | 120/300 [00:17<00:25,  7.00it/s]Eval PushtImageRunner 1/1:  53%|█████▎    | 160/300 [00:22<00:19,  7.08it/s]Eval PushtImageRunner 1/1:  69%|██████▉   | 208/300 [00:28<00:12,  7.65it/s]Eval PushtImageRunner 1/1:  88%|████████▊ | 264/300 [00:33<00:04,  8.55it/s]                                                                            wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: Tracking run with wandb version 0.23.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033235-8y7xnrg1
+wandb: 
+wandb: Run history:
+wandb:       inference_latency_ms ▁
+wandb:   inference_latency_p50_ms ▁
+wandb:   inference_latency_p95_ms ▁
+wandb:        test/final_distance ▁
+wandb:            test/mean_score ▁
+wandb:       test/mean_step_count ▁
+wandb: test/sim_max_reward_100000 ▁
+wandb: test/sim_max_reward_100001 ▁
+wandb: test/sim_max_reward_100002 ▁
+wandb: test/sim_max_reward_100003 ▁
+wandb:                        +49 ...
+wandb: 
+wandb: Run summary:
+wandb:       inference_latency_ms 24.9352
+wandb:   inference_latency_p50_ms 23.13536
+wandb:   inference_latency_p95_ms 23.18541
+wandb:        test/final_distance 49.84883
+wandb:            test/mean_score 0.79797
+wandb:       test/mean_step_count 257.04
+wandb: test/sim_max_reward_100000 1
+wandb: test/sim_max_reward_100001 0.18011
+wandb: test/sim_max_reward_100002 1
+wandb: test/sim_max_reward_100003 1
+wandb:                        +49 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033235-8y7xnrg1
+wandb: Find logs at: ./wandb/offline-run-20251205_033235-8y7xnrg1/logs
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Eval PushtImageRunner 1/1:   0%|          | 0/300 [00:00<?, ?it/s]Eval PushtImageRunner 1/1:  13%|█▎        | 40/300 [00:05<00:37,  6.93it/s]Eval PushtImageRunner 1/1:  27%|██▋       | 80/300 [00:11<00:31,  7.00it/s]Eval PushtImageRunner 1/1:  40%|████      | 120/300 [00:16<00:25,  7.10it/s]Eval PushtImageRunner 1/1:  53%|█████▎    | 160/300 [00:22<00:19,  7.19it/s]Eval PushtImageRunner 1/1:  67%|██████▋   | 200/300 [00:27<00:13,  7.33it/s]Eval PushtImageRunner 1/1:  80%|████████  | 240/300 [00:32<00:07,  7.54it/s]Eval PushtImageRunner 1/1:  96%|█████████▌| 288/300 [00:38<00:01,  7.89it/s]                                                                            wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: Tracking run with wandb version 0.23.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033330-hr6arskr
+wandb: 
+wandb: Run history:
+wandb:       inference_latency_ms ▁
+wandb:   inference_latency_p50_ms ▁
+wandb:   inference_latency_p95_ms ▁
+wandb:        test/final_distance ▁
+wandb:            test/mean_score ▁
+wandb:       test/mean_step_count ▁
+wandb: test/sim_max_reward_100000 ▁
+wandb: test/sim_max_reward_100001 ▁
+wandb: test/sim_max_reward_100002 ▁
+wandb: test/sim_max_reward_100003 ▁
+wandb:                        +49 ...
+wandb: 
+wandb: Run summary:
+wandb:       inference_latency_ms 24.94782
+wandb:   inference_latency_p50_ms 23.13688
+wandb:   inference_latency_p95_ms 23.1721
+wandb:        test/final_distance 79.24899
+wandb:            test/mean_score 0.66726
+wandb:       test/mean_step_count 277.96
+wandb: test/sim_max_reward_100000 0.70539
+wandb: test/sim_max_reward_100001 0.18011
+wandb: test/sim_max_reward_100002 0.56903
+wandb: test/sim_max_reward_100003 0.9104
+wandb:                        +49 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033330-hr6arskr
+wandb: Find logs at: ./wandb/offline-run-20251205_033330-hr6arskr/logs
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/storage/home/hcoda1/9/eliu354/r-agarg35-0/envs/DPFM/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Eval PushtImageRunner 1/1:   0%|          | 0/300 [00:00<?, ?it/s]Eval PushtImageRunner 1/1:   8%|▊         | 24/300 [00:05<01:01,  4.46it/s]Eval PushtImageRunner 1/1:  16%|█▌        | 48/300 [00:10<00:55,  4.54it/s]Eval PushtImageRunner 1/1:  24%|██▍       | 72/300 [00:15<00:49,  4.57it/s]Eval PushtImageRunner 1/1:  32%|███▏      | 96/300 [00:21<00:44,  4.59it/s]Eval PushtImageRunner 1/1:  40%|████      | 120/300 [00:26<00:38,  4.65it/s]Eval PushtImageRunner 1/1:  51%|█████     | 152/300 [00:32<00:30,  4.83it/s]Eval PushtImageRunner 1/1:  61%|██████▏   | 184/300 [00:38<00:23,  5.02it/s]Eval PushtImageRunner 1/1:  72%|███████▏  | 216/300 [00:43<00:15,  5.26it/s]Eval PushtImageRunner 1/1:  83%|████████▎ | 248/300 [00:49<00:09,  5.50it/s]Eval PushtImageRunner 1/1:  93%|█████████▎| 280/300 [00:54<00:03,  5.72it/s]                                                                            wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: WARNING `format` argument was not provided, defaulting to `gif`. This parameter will be required in v0.20.0, please specify the format explicitly.
+wandb: Tracking run with wandb version 0.23.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033444-iwm850xq
+wandb: 
+wandb: Run history:
+wandb:       inference_latency_ms ▁
+wandb:   inference_latency_p50_ms ▁
+wandb:   inference_latency_p95_ms ▁
+wandb:        test/final_distance ▁
+wandb:            test/mean_score ▁
+wandb:       test/mean_step_count ▁
+wandb: test/sim_max_reward_100000 ▁
+wandb: test/sim_max_reward_100001 ▁
+wandb: test/sim_max_reward_100002 ▁
+wandb: test/sim_max_reward_100003 ▁
+wandb:                        +49 ...
+wandb: 
+wandb: Run summary:
+wandb:       inference_latency_ms 637.01646
+wandb:   inference_latency_p50_ms 635.04887
+wandb:   inference_latency_p95_ms 637.46578
+wandb:        test/final_distance 30.64869
+wandb:            test/mean_score 0.81583
+wandb:       test/mean_step_count 238.42
+wandb: test/sim_max_reward_100000 1
+wandb: test/sim_max_reward_100001 0.9773
+wandb: test/sim_max_reward_100002 1
+wandb: test/sim_max_reward_100003 1
+wandb:                        +49 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /storage/project/r-agarg35-0/eliu354/projects/Diffusion-Policy-Flow-Matching/diffusion_policy/wandb/offline-run-20251205_033444-iwm850xq
+wandb: Find logs at: ./wandb/offline-run-20251205_033444-iwm850xq/logs

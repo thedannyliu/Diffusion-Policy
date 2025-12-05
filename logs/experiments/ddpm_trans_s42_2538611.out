@@ -1,0 +1,45 @@
+---------------------------------------
+Begin Slurm Prolog: Dec-05-2025 03:29:52
+Job ID:    2538611
+User ID:   eliu354
+Account:   gts-agarg35-ideas_l40s
+Job name:  ddpm_trans
+Partition: gpu-l40s
+QOS:       inferno
+---------------------------------------
+=== DDPM Transformer Training ===
+Job ID: 2538611
+Node: atl1-1-03-004-29-0
+Start time: Fri Dec  5 03:29:52 AM EST 2025
+Fri Dec  5 03:29:55 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA L40S                    On  |   00000000:C1:00.0 Off |                    0 |
+| N/A   33C    P8             33W /  350W |       0MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+==========================================
+Training DDPM Transformer (seed=42)
+==========================================
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+[2025-12-05 03:30:00,770][diffusion_policy.model.diffusion.transformer_for_diffusion][INFO] - number of parameters: 8.976898e+06

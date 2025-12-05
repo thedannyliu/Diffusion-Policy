@@ -1,0 +1,284 @@
+---------------------------------------
+Begin Slurm Prolog: Dec-05-2025 03:28:03
+Job ID:    2538553
+User ID:   eliu354
+Account:   gts-agarg35-ideas_l40s
+Job name:  dpfm_eval_all
+Partition: gpu-l40s
+QOS:       inferno
+---------------------------------------
+=== DPFM Batch Evaluation ===
+Job ID: 2538553
+Node: atl1-1-03-004-29-0
+Start time: Fri Dec  5 03:28:03 AM EST 2025
+Fri Dec  5 03:28:06 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA L40S                    On  |   00000000:1E:00.0 Off |                    0 |
+| N/A   35C    P8             34W /  350W |       0MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+==========================================
+Evaluating: fm_trans_s42
+Checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.43_train_fm_transformer_hybrid_pusht_image/checkpoints/epoch=0000-test_mean_score=0.117.ckpt
+Output: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_trans_s42
+==========================================
+Loading checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.43_train_fm_transformer_hybrid_pusht_image/checkpoints/epoch=0000-test_mean_score=0.117.ckpt
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+Running evaluation with 50 test episodes...
+
+==================================================
+EVALUATION RESULTS
+==================================================
+Test Mean Score: 0.1140
+Test Success Rate: 1.0000
+Target-area Coverage: 0.1083
+Final Distance: 226.5801
+Mean Step Count: 300.00
+Smoothness: 3.9572e+01
+Inference Latency (mean): 57.67 ms
+Inference Latency (p50): 20.91 ms
+Inference Latency (p95): 21.05 ms
+==================================================
+
+Results saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_trans_s42/eval_results.json
+Full log saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_trans_s42/eval_log_full.json
+Completed: fm_trans_s42
+
+==========================================
+Evaluating: fm_steps8
+Checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.51_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.801.ckpt
+Output: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_steps8
+==========================================
+Loading checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.51_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.801.ckpt
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+Running evaluation with 50 test episodes...
+
+==================================================
+EVALUATION RESULTS
+==================================================
+Test Mean Score: 0.7687
+Test Success Rate: 1.0000
+Target-area Coverage: 0.7350
+Final Distance: 60.2171
+Mean Step Count: 243.94
+Smoothness: 1.5072e+00
+Inference Latency (mean): 49.04 ms
+Inference Latency (p50): 45.33 ms
+Inference Latency (p95): 45.39 ms
+==================================================
+
+Results saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_steps8/eval_results.json
+Full log saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_steps8/eval_log_full.json
+Completed: fm_steps8
+
+==========================================
+Evaluating: fm_lr1e-3
+Checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/17.06.31_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0600-test_mean_score=0.741.ckpt
+Output: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_lr1e-3
+==========================================
+Loading checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/17.06.31_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0600-test_mean_score=0.741.ckpt
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+Running evaluation with 50 test episodes...
+
+==================================================
+EVALUATION RESULTS
+==================================================
+Test Mean Score: 0.6663
+Test Success Rate: 1.0000
+Target-area Coverage: 0.6366
+Final Distance: 70.3126
+Mean Step Count: 260.78
+Smoothness: 9.4378e-01
+Inference Latency (mean): 24.90 ms
+Inference Latency (p50): 23.11 ms
+Inference Latency (p95): 23.15 ms
+==================================================
+
+Results saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_lr1e-3/eval_results.json
+Full log saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_lr1e-3/eval_log_full.json
+Completed: fm_lr1e-3
+
+==========================================
+Evaluating: fm_steps16
+Checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.47_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.844.ckpt
+Output: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_steps16
+==========================================
+Loading checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.47_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.844.ckpt
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+Running evaluation with 50 test episodes...
+
+==================================================
+EVALUATION RESULTS
+==================================================
+Test Mean Score: 0.7936
+Test Success Rate: 1.0000
+Target-area Coverage: 0.7580
+Final Distance: 56.0638
+Mean Step Count: 242.38
+Smoothness: 9.6521e-01
+Inference Latency (mean): 92.22 ms
+Inference Latency (p50): 90.43 ms
+Inference Latency (p95): 90.62 ms
+==================================================
+
+Results saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_steps16/eval_results.json
+Full log saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_steps16/eval_log_full.json
+Completed: fm_steps16
+
+==========================================
+Evaluating: fm_lr5e-5
+Checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/11.23.53_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0450-test_mean_score=0.820.ckpt
+Output: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_lr5e-5
+==========================================
+Loading checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/11.23.53_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0450-test_mean_score=0.820.ckpt
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+Running evaluation with 50 test episodes...
+
+==================================================
+EVALUATION RESULTS
+==================================================
+Test Mean Score: 0.7980
+Test Success Rate: 1.0000
+Target-area Coverage: 0.7610
+Final Distance: 49.8488
+Mean Step Count: 257.04
+Smoothness: 9.3541e-01
+Inference Latency (mean): 24.94 ms
+Inference Latency (p50): 23.14 ms
+Inference Latency (p95): 23.19 ms
+==================================================
+
+Results saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_lr5e-5/eval_results.json
+Full log saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_lr5e-5/eval_log_full.json
+Completed: fm_lr5e-5
+
+==========================================
+Evaluating: fm_unet_s42
+Checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.43_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.777.ckpt
+Output: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_unet_s42
+==========================================
+Loading checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/03.31.43_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.777.ckpt
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+Running evaluation with 50 test episodes...
+
+==================================================
+EVALUATION RESULTS
+==================================================
+Test Mean Score: 0.6673
+Test Success Rate: 1.0000
+Target-area Coverage: 0.6367
+Final Distance: 79.2490
+Mean Step Count: 277.96
+Smoothness: 1.4038e+00
+Inference Latency (mean): 24.95 ms
+Inference Latency (p50): 23.14 ms
+Inference Latency (p95): 23.17 ms
+==================================================
+
+Results saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_unet_s42/eval_results.json
+Full log saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/fm_unet_s42/eval_log_full.json
+Completed: fm_unet_s42
+
+==========================================
+Evaluating: ddpm_unet_s42
+Checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/04.06.14_train_ddpm_unet_hybrid_pusht_image/checkpoints/epoch=0450-test_mean_score=0.869.ckpt
+Output: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/ddpm_unet_s42
+==========================================
+Loading checkpoint: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/data/outputs/2025.12.04/04.06.14_train_ddpm_unet_hybrid_pusht_image/checkpoints/epoch=0450-test_mean_score=0.869.ckpt
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+Diffusion params: 2.515119e+08
+Vision params: 1.119709e+07
+Running evaluation with 50 test episodes...
+
+==================================================
+EVALUATION RESULTS
+==================================================
+Test Mean Score: 0.8158
+Test Success Rate: 1.0000
+Target-area Coverage: 0.7811
+Final Distance: 30.6487
+Mean Step Count: 238.42
+Smoothness: 9.2792e-01
+Inference Latency (mean): 637.02 ms
+Inference Latency (p50): 635.05 ms
+Inference Latency (p95): 637.47 ms
+==================================================
+
+Results saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/ddpm_unet_s42/eval_results.json
+Full log saved to /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/ddpm_unet_s42/eval_log_full.json
+Completed: ddpm_unet_s42
+
+==========================================
+All Evaluations Complete
+==========================================
+End time: Fri Dec  5 03:34:46 AM EST 2025
+Results saved in: /storage/home/hcoda1/9/eliu354/r-agarg35-0/projects/Diffusion-Policy-Flow-Matching/results/
+---------------------------------------
+Begin Slurm Epilog: Dec-05-2025 03:34:46
+Job ID:        2538553
+User ID:       eliu354
+Account:       gts-agarg35-ideas_l40s
+Job name:      dpfm_eval_all
+Resources:     cpu=8,gres/gpu:l40s=1,mem=64G,node=1
+Rsrc Used:     cput=00:53:44,vmem=0,walltime=00:06:43,mem=34955436K,energy_used=0
+Partition:     gpu-l40s
+QOS:           inferno
+Nodes:         atl1-1-03-004-29-0
+---------------------------------------
