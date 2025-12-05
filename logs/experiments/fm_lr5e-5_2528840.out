@@ -1,0 +1,74 @@
+---------------------------------------
+Begin Slurm Prolog: Dec-04-2025 11:23:47
+Job ID:    2528840
+User ID:   eliu354
+Account:   gts-agarg35-ideas_l40s
+Job name:  fm_lr5e-5
+Partition: gpu-l40s
+QOS:       inferno
+---------------------------------------
+=== fm_lr5e-5 ===
+Job ID: 2528840
+Node: atl1-1-03-007-29-0
+Start: Thu Dec  4 11:23:47 AM EST 2025
+Thu Dec  4 11:23:48 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA L40S                    On  |   00000000:1B:00.0 Off |                    0 |
+| N/A   35C    P8             34W /  350W |       0MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+CUDA_VISIBLE_DEVICES: 0
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+[2025-12-04 11:23:54,652][diffusion_policy.model.diffusion.conditional_unet1d][INFO] - number of parameters: 2.515119e+08
+
+=== Early Stopping at epoch 1100 ===
+Best score: 0.8161
+
+==================================================
+Training Complete: 1100 epochs
+==================================================
+
+=== Latency Statistics ===
+p50: 24.47 ms
+p95: 24.49 ms
+Mean: 24.52 ms
+
+=== Jerk Statistics ===
+Mean jerk: 5282.8152
+Std jerk: 6787.0634
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33mfm_lr5e-5_step4_seed42[0m at: [34m[0m
+[1;34mwandb[0m: Find logs at: [1;35m../data/outputs/2025.12.04/11.23.53_train_fm_unet_hybrid_pusht_image/wandb/run-20251204_112357-7wop43e2/logs[0m
+End: Thu Dec  4 06:11:11 PM EST 2025
+---------------------------------------
+Begin Slurm Epilog: Dec-04-2025 18:11:11
+Job ID:        2528840
+User ID:       eliu354
+Account:       gts-agarg35-ideas_l40s
+Job name:      fm_lr5e-5
+Resources:     cpu=8,gres/gpu:l40s=1,mem=384G,node=1
+Rsrc Used:     cput=2-06:19:12,vmem=0,walltime=06:47:24,mem=24121240K,energy_used=0
+Partition:     gpu-l40s
+QOS:           inferno
+Nodes:         atl1-1-03-007-29-0
+---------------------------------------

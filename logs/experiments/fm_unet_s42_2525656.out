@@ -1,0 +1,53 @@
+---------------------------------------
+Begin Slurm Prolog: Dec-04-2025 03:31:09
+Job ID:    2525656
+User ID:   eliu354
+Account:   gts-agarg35-ideas_l40s
+Job name:  fm_unet_s42
+Partition: gpu-l40s
+QOS:       inferno
+---------------------------------------
+=== fm_unet_s42 ===
+Job ID: 2525656
+Node: atl1-1-03-007-29-0
+Start: Thu Dec  4 03:31:09 AM EST 2025
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+[2025-12-04 03:31:45,955][diffusion_policy.model.diffusion.conditional_unet1d][INFO] - number of parameters: 2.515119e+08
+
+=== Early Stopping at epoch 1050 ===
+Best score: 0.7504
+
+==================================================
+Training Complete: 1050 epochs
+==================================================
+
+=== Latency Statistics ===
+p50: 24.48 ms
+p95: 24.49 ms
+Mean: 24.54 ms
+
+=== Jerk Statistics ===
+Mean jerk: 5563.7041
+Std jerk: 7078.9090
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33mfm_unet_step4_seed42[0m at: [34m[0m
+[1;34mwandb[0m: Find logs at: [1;35m../data/outputs/2025.12.04/03.31.43_train_fm_unet_hybrid_pusht_image/wandb/run-20251204_033202-0a7ek9od/logs[0m
+End: Thu Dec  4 09:59:01 AM EST 2025
+---------------------------------------
+Begin Slurm Epilog: Dec-04-2025 09:59:01
+Job ID:        2525656
+User ID:       eliu354
+Account:       gts-agarg35-ideas_l40s
+Job name:      fm_unet_s42
+Resources:     cpu=8,gres/gpu:l40s=1,mem=384G,node=1
+Rsrc Used:     cput=2-03:42:56,vmem=0,walltime=06:27:52,mem=24948080K,energy_used=0
+Partition:     gpu-l40s
+QOS:           inferno
+Nodes:         atl1-1-03-007-29-0
+---------------------------------------

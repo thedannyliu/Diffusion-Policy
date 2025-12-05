@@ -147,14 +147,12 @@ datasets/
 *.h5
 *.zarr
 outputs/
-logs/
 wandb/
 checkpoints/
 *.ckpt
 *.pt
 *.pth
 trained_models/
-results/
 videos/
 *.mp4
 *.avi
@@ -179,7 +177,11 @@ tmp/
 temp/
 *.tmp
 
-# Additional project directories (not for version control)
-docs/
-scripts/
-logs/
+# Keep these directories in version control (cleaned for submission)
+# logs/ - contains experiment logs
+# results/ - contains evaluation results
+# docs/ - contains documentation
+# scripts/ - contains submission scripts
+
+# Private planning documents
+docs/master_plan.md

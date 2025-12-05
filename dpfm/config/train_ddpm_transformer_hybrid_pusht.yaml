@@ -1,0 +1,151 @@
+# DDPM Transformer Hybrid Baseline Config for PushT
+# Tests DDPM with Transformer architecture (vs UNet)
+
+defaults:
+  - _self_
+  - task: pusht_image
+
+name: train_ddpm_transformer_hybrid
+_target_: diffusion_policy.workspace.train_diffusion_transformer_hybrid_workspace.TrainDiffusionTransformerHybridWorkspace
+
+exp_name: ddpm_trans_baseline
+task_name: pusht_image
+
+# === Key Paper Settings ===
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+obs_as_cond: true
+past_action_visible: false
+keypoint_visible_rate: 1.0
+dataset_obs_steps: ${n_obs_steps}
+
+# === Shape Meta (same as paper) ===
+shape_meta:
+  obs:
+    image:
+      shape: [3, 96, 96]
+      type: rgb
+    agent_pos:
+      shape: [2]
+      type: low_dim
+  action:
+    shape: [2]
+
+# === DDPM Transformer Policy ===
+policy:
+  _target_: diffusion_policy.policy.diffusion_transformer_hybrid_image_policy.DiffusionTransformerHybridImagePolicy
+  
+  shape_meta: ${shape_meta}
+  horizon: ${horizon}
+  n_action_steps: ${n_action_steps}
+  n_obs_steps: ${n_obs_steps}
+  
+  # Transformer architecture (same as FM Transformer for fair comparison)
+  n_layer: 8
+  n_head: 4
+  n_emb: 256
+  p_drop_emb: 0.0
+  p_drop_attn: 0.3
+  causal_attn: true
+  time_as_cond: true
+  obs_as_cond: ${obs_as_cond}
+  n_cond_layers: 0
+  
+  # Observation encoder
+  crop_shape: [76, 76]
+  obs_encoder_group_norm: false
+  eval_fixed_crop: false
+  
+  # DDPM Noise Scheduler
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
+    num_train_timesteps: 100
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: true
+    prediction_type: epsilon
+    variance_type: fixed_small
+    beta_start: 0.0001
+    beta_end: 0.02
+  
+  # Inference steps (100 for DDPM)
+  num_inference_steps: 100
+
+# === Optimizer (same as FM Transformer for fair comparison) ===
+optimizer:
+  transformer_weight_decay: 1.0e-3
+  obs_encoder_weight_decay: 1.0e-6
+  learning_rate: 1.0e-4
+  betas: [0.9, 0.95]
+
+# === EMA ===
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+# === Training ===
+training:
+  device: cuda:0
+  seed: 42
+  debug: false
+  resume: true
+  num_epochs: 3050
+  gradient_accumulate_every: 1
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  use_ema: true
+  freeze_encoder: false
+  rollout_every: 50
+  checkpoint_every: 50
+  val_every: 1
+  sample_every: 5
+  max_train_steps: null
+  max_val_steps: null
+  tqdm_interval_sec: 1.0
+
+# === DataLoader ===
+dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: true
+  pin_memory: true
+  persistent_workers: false
+
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: false
+  pin_memory: true
+  persistent_workers: false
+
+# === Checkpointing ===
+checkpoint:
+  topk:
+    monitor_key: test_mean_score
+    mode: max
+    k: 3
+    format_str: 'epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt'
+  save_last_ckpt: true
+  save_last_snapshot: false
+
+# === Logging ===
+logging:
+  project: dpfm_pusht_ablation
+  group: ${exp_name}
+  name: '${exp_name}_step100_seed${training.seed}'
+  resume: true
+  mode: online
+  tags:
+    - ddpm
+    - transformer
+    - baseline
+    - pusht
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  wandb_name_base: '${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}'

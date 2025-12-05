@@ -1,0 +1,11 @@
+{
+  "test_mean_score": 0.7686533141163417,
+  "test_success_rate": 1.0,
+  "test_target_area_coverage": 0.7349758832770178,
+  "test_final_distance": 60.21713292725249,
+  "test_mean_step_count": 243.94,
+  "test_smoothness": 1.507204311629253,
+  "inference_latency_ms": 49.03816350882775,
+  "inference_latency_p50_ms": 45.33386090770364,
+  "inference_latency_p95_ms": 45.38684603758156
+}
