@@ -1,0 +1,20 @@
+{
+  "FM_step8_s42_lr1e-4": {
+    "test_mean_score": 0.7406864741923297,
+    "inference_steps": 8,
+    "eval_time_sec": 34.44692015647888,
+    "latency_ms": 45.08388042449951
+  },
+  "FM_step4_s123_lr1e-4": {
+    "test_mean_score": 0.676333552338412,
+    "inference_steps": 4,
+    "eval_time_sec": 37.545286655426025,
+    "latency_ms": 23.124590516090393
+  },
+  "FM_step4_s42_lr2e-4": {
+    "test_mean_score": 0.7234302430708549,
+    "inference_steps": 4,
+    "eval_time_sec": 36.96509861946106,
+    "latency_ms": 23.139129392802715
+  }
+}
