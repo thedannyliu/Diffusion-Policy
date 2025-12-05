@@ -61,7 +61,7 @@ For detailed ablation results, see [docs/results.md](docs/results.md).
 ## Repository Structure
 
 ```
-Diffusion-Visuomotor-Policies/
+Diffusion-Policy/
 ├── README.md                     # This document
 ├── requirements.txt              # Python dependencies
 ├── notebooks/
@@ -100,8 +100,8 @@ Diffusion-Visuomotor-Policies/
 
 ```bash
 # Clone repository
-git clone https://github.com/thedannyliu/Diffusion-Visuomotor-Policies.git
-cd Diffusion-Visuomotor-Policies
+git clone https://github.com/thedannyliu/Diffusion-Policy.git
+cd Diffusion-Policy
 
 # Create conda environment
 conda create -n DPFM python=3.9 -y
