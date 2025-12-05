@@ -8,10 +8,10 @@ import cv2
 import os
 
 TASK_DICT = {
-    "two_views_sphere": Path("./diffusion/data/eval_two_cameras_sphere"),
-    "one_view_sphere": Path("./diffusion/data/eval_one_camera_sphere"),
-    "two_views_cube": Path("./diffusion/temp/eval_two_camera_cube"),
-    "one_view_cube": Path("./diffusion/data/eval_one_camera_cube"),
+    "two_views_sphere": Path("./segment-anything-annotator/diffusion/eval_data/eval_two_cameras_sphere"),
+    "one_view_sphere": Path("./segment-anything-annotator/diffusion/eval_data/eval_one_camera_sphere"),
+    "two_views_cube": Path("./segment-anything-annotator/diffusion/eval_data/eval_two_camera_cube"),
+    "one_view_cube": Path("./segment-anything-annotator/diffusion/eval_data/eval_one_camera_cube"),
 }
 
 OUTPUT_DIR = "./diffusion/output"
