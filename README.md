@@ -109,9 +109,15 @@ Diffusion-Policy/
 │   └── evaluations/              # Evaluation rollout data
 │
 ├── notebooks/
+│   ├── data_visualization.ipynb  # Data loading guide and examples
 │   └── results_analysis.ipynb    # Result visualization and analysis
 │
-├── scripts/                      # Job submission scripts
+├── scripts/                      # Visualization and job submission scripts
+│   ├── plot_all_episodes_overlay.py    # Multi-episode trajectory plotting
+│   ├── plot_individual_episodes.py     # Single episode visualization
+│   ├── plot_training_vs_eval.py        # Training/eval comparison
+│   └── ...                             # Additional scripts
+│
 ├── results/                      # Evaluation outputs
 └── docs/                         # Additional documentation
 ```
@@ -172,6 +178,19 @@ unzip data.zip
 
 **Optional**: Download pre-generated `Trajectory_Plots/` folder from the drive.
 
+**Verify your data download:**
+```bash
+# Use the data visualization notebook to check data integrity
+jupyter notebook notebooks/data_visualization.ipynb
+```
+
+The notebook provides comprehensive data loading examples and uses visualization utilities from the `scripts/` directory to generate publication-quality trajectory plots with:
+- Start/end point markers (green circles and black stars/red X)
+- Initial robot pose indicators (pink pentagon)
+- Reference regions (board boundaries, workspace limits, target locations)
+- Success/failure differentiation with color-coded endpoints
+- Comprehensive legends for all plot elements
+
 See **[data/README.md](data/README.md)** for detailed setup instructions and plotting script usage.
 
 ### 3. Training
@@ -208,7 +227,31 @@ python dpfm/eval.py \
     --output_dir results/eval_output
 ```
 
-### 5. Reproduce Results
+### 5. Explore and Visualize Data
+
+To understand the data format and verify your download:
+
+```bash
+# Visualize sample data from each dataset
+jupyter notebook notebooks/data_visualization.ipynb
+```
+
+This notebook demonstrates how to:
+- Load training data (Zarr format for both simulation and real robot)
+- Load evaluation rollout recordings
+- Visualize camera observations and action trajectories
+- Generate publication-quality trajectory plots with comprehensive annotations
+- Compare training demonstrations with evaluation rollouts
+
+The visualization system uses utilities from `scripts/plot_all_episodes_overlay.py`, `scripts/plot_individual_episodes.py`, and `scripts/plot_training_vs_eval.py` to create professional plots featuring:
+- **Trajectory overlays** with color-coded episodes
+- **Start/end markers**: Green circles (start), black stars (success), red X (failure)
+- **Initial robot pose**: Pink pentagon showing starting configuration
+- **Reference regions**: Board boundaries (brown dashed), workspace limits (gray dotted)
+- **Target locations**: Cube target (rotated orange square), Sphere target (cyan circle)
+- **Comprehensive legends** for all plot elements
+
+### 6. Reproduce Results
 
 Open `notebooks/results_analysis.ipynb` in Jupyter to reproduce the key metrics and visualizations:
 
