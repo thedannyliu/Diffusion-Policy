@@ -111,11 +111,27 @@ unzip pusht.zip
 cd ../..
 ```
 
-#### Real Robot Data (Optional)
+#### Real Robot Data & Plotting
+
+For training the diffusion policy from real collected demonstrations we used the following:
+
 ```bash
-# Download from: [PLACEHOLDER - Add Google Drive/Dropbox link]
-# Place in data/training/real_robot/
+Download data.zip (~2.5GB) from Google Drive
+# https://drive.google.com/drive/folders/1fy_uOMjU0OhQmbbqVIfamUVsaG92qr6L?usp=sharing
+
+In this folder you cand find our training data, visualizations and record of the evaluations/abllations conducted. 
+
+# Extract to repo root
+unzip data.zip
+
+# This creates:
+# - data/training/        (two_cameras_cube, two_cameras_sphere)
+# - data/evaluations/     (9 evaluation runs)
 ```
+
+**Optional**: Download pre-generated `Trajectory_Plots/` folder from the drive.
+
+See **[data/README.md](data/README.md)** for detailed setup instructions and plotting script usage.
 
 ### 3. Training
 
