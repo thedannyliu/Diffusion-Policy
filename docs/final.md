@@ -6,41 +6,64 @@ This document tracks all experiments comparing **Diffusion Policy (DDPM)** and *
 
 ## WandB Projects
 
-All experiments log to WandB with distinct run names:
+All experiments log to WandB project `dpfm_pusht_ablation` with distinct run names.
 
-| Project | URL | Description |
-|---------|-----|-------------|
-| `dpfm_pusht_v2` | https://wandb.ai/danny010324/dpfm_pusht_v2 | FM experiments (currently running) |
-| `dpfm_pusht_experiments` | https://wandb.ai/danny010324/dpfm_pusht_experiments | DDPM experiments (currently running) |
-| `dpfm_pusht_ablation` | (future runs) | Unified project for all future experiments |
+Configure your WandB entity via environment variable:
+```bash
+export WANDB_ENTITY=<your_wandb_username>
+```
 
-### Current Run Names in WandB
+### Run Naming Convention
 
-| Job ID | WandB Run Name | WandB Project | Description |
-|--------|----------------|---------------|-------------|
-| 2526314 | `ddpm_unet_seed42` | dpfm_pusht_experiments | DDPM UNet baseline |
-| 2525656 | `fm_unet_step4_seed42` | dpfm_pusht_v2 | FM UNet baseline |
-| 2525657 | `fm_transformer_transformer_step4_seed42` | dpfm_pusht_v2 | FM Transformer baseline |
-| 2525658 | `fm_steps4_step4_seed42` | dpfm_pusht_v2 | FM 4 inference steps |
-| 2525659 | `fm_steps8_step8_seed42` | dpfm_pusht_v2 | FM 8 inference steps |
-| 2525660 | `fm_steps16_step16_seed42` | dpfm_pusht_v2 | FM 16 inference steps |
+| Experiment Type | WandB Run Name Pattern | Description |
+|-----------------|------------------------|-------------|
+| DDPM Baseline | `ddpm_unet_seed{S}` | DDPM UNet baseline |
+| FM UNet | `fm_unet_step{N}_seed{S}` | FM UNet with N steps |
+| FM Transformer | `fm_transformer_step{N}_seed{S}` | FM Transformer |
+| FM Steps Ablation | `fm_steps{N}_step{N}_seed{S}` | Inference steps ablation |
 
 ---
 
-## Currently Running Experiments
+## Completed Experiments (Dec 2025)
 
-### Phase 1: Baselines + Ablation A (Started 2025-12-04)
+### Final Results Summary
 
-| Job ID | SLURM Name | Method | Architecture | Inference Steps | Node | Status |
-|--------|------------|--------|--------------|-----------------|------|--------|
-| 2526314 | ddpm_unet_s42 | DDPM | UNet | 100 | atl1-1-03-004-29-0 | ✅ Training |
-| 2525656 | fm_unet_s42 | FM | UNet | 4 | atl1-1-03-007-29-0 | ✅ Training |
-| 2525657 | fm_trans_s42 | FM | Transformer | 4 | atl1-1-03-007-31-0 | ✅ Training |
-| 2525658 | fm_steps4 | FM | UNet | 4 | atl1-1-01-010-29-0 | ✅ Training |
-| 2525659 | fm_steps8 | FM | UNet | 8 | atl1-1-01-010-31-0 | ✅ Training |
-| 2525660 | fm_steps16 | FM | UNet | 16 | atl1-1-01-010-33-0 | ✅ Training |
+| Experiment | Method | Steps | Best Score | Latency (p50) | Training Time |
+|------------|--------|-------|------------|---------------|---------------|
+| **ddpm_unet_s42** | DDPM | 100 | **0.869** | 650 ms | 19.4 hr |
+| fm_unet_s42 | FM | 4 | 0.750 | 24.5 ms | 6.5 hr |
+| fm_steps4 | FM | 4 | 0.757 | 24.4 ms | 6.8 hr |
+| **fm_steps8** | FM | 8 | **0.779** | 48.0 ms | 8.0 hr |
+| fm_steps16 | FM | 16 | 0.757 | 150.7 ms | 8.9 hr |
+| fm_trans_s42 | FM Trans | 4 | 0.072 | 21.1 ms | 7.2 hr |
+| fm_lr5e-5 | FM | 4 | **0.816** | 24.5 ms | 6.8 hr |
+| fm_lr1e-3 | FM | 4 | 0.741 | 24.5 ms | 6.7 hr |
 
-**Total: 6 jobs running**
+### Key Findings
+
+1. **DDPM Baseline**: Best score 0.869 at epoch 450
+2. **Best FM Configuration**: LR=5e-5 achieves 0.816 (only 6% below DDPM)
+3. **Optimal Steps**: 8 steps (0.779) provides best speed/accuracy trade-off
+4. **Speedup**: FM achieves **13-27× speedup** over DDPM
+5. **Architecture**: Transformer architecture fails with FM (0.072 score)
+
+### Phase 1: Baselines + Ablation A (Completed 2025-12-05)
+
+| Job ID | SLURM Name | Method | Best Score | Latency | Status |
+|--------|------------|--------|------------|---------|--------|
+| 2526314 | ddpm_unet_s42 | DDPM | 0.869 | 650 ms | ✅ Completed |
+| 2525656 | fm_unet_s42 | FM | 0.750 | 24.5 ms | ✅ Completed |
+| 2525657 | fm_trans_s42 | FM Trans | 0.072 | 21.1 ms | ✅ Completed |
+| 2525658 | fm_steps4 | FM | 0.757 | 24.4 ms | ✅ Completed |
+| 2525659 | fm_steps8 | FM | 0.779 | 48.0 ms | ✅ Completed |
+| 2525660 | fm_steps16 | FM | 0.757 | 150.7 ms | ✅ Completed |
+
+### Phase 2: Learning Rate Ablation (Completed 2025-12-05)
+
+| Job ID | SLURM Name | LR | Best Score | Status |
+|--------|------------|-----|------------|--------|
+| 2528840 | fm_lr5e-5 | 5e-5 | **0.816** | ✅ Completed |
+| 2533021 | fm_lr1e-3 | 1e-3 | 0.741 | ✅ Completed |
 
 ### Output Directories
 
@@ -147,10 +170,10 @@ data/outputs/2025.11.27/04.36.04_train_fm_unet_hybrid_pusht_image/checkpoints/ep
 ### Check Job Status
 ```bash
 # Check all running jobs
-squeue -u eliu354 --format="%.10i %.15j %.2t %.10M %R"
+squeue -u $USER --format="%.10i %.15j %.2t %.10M %R"
 
 # Check training progress
-for job in ddpm_unet_s42_2526314 fm_unet_s42_2525656 fm_trans_s42_2525657 fm_steps4_2525658 fm_steps8_2525659 fm_steps16_2525660; do
+for job in ddpm_unet_s42 fm_unet_s42 fm_trans_s42 fm_steps4 fm_steps8 fm_steps16; do
     epoch=$(grep -E "Training epoch [0-9]+:" logs/experiments/${job}.err 2>/dev/null | tail -1 | grep -oP "epoch \K[0-9]+" | head -1)
     echo "$job: epoch ${epoch:-0} / 3050"
 done

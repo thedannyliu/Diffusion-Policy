@@ -119,16 +119,15 @@ Ablation configs follow pattern:
 ## WandB Logging
 
 All experiments logged to WandB with:
-- Project: `dpfm_pusht_ablations` (unified for all future runs)
-- Legacy Projects: `dpfm_pusht_v2` (FM), `dpfm_pusht_experiments` (DDPM)
-- Entity: `danny010324`
+- Project: `dpfm_pusht_ablation` (unified project)
+- Entity: Configure via `WANDB_ENTITY` environment variable
 
 Naming Convention:
 - `{exp_name}_step{N}_seed{S}` - e.g., `fm_unet_step4_seed42`
 
 ---
 
-## Experiment Status (Updated: 2025-01-15)
+## Experiment Status (Updated: 2025-12-04)
 
 ### Phase 1: Running
 
@@ -149,11 +148,12 @@ Naming Convention:
 | **Ablation C (Seeds)**: seed 123, 456 | Medium | ~10hr each |
 | **Ablation D (Data)**: 50%, 25% | Low | ~10hr each |
 
-### WandB Dashboard Links
+### WandB Dashboard
 
-- **FM Experiments**: https://wandb.ai/danny010324/dpfm_pusht_v2
-- **DDPM Experiments**: https://wandb.ai/danny010324/dpfm_pusht_experiments
-- **Future Unified**: https://wandb.ai/danny010324/dpfm_pusht_ablations
+Experiments are logged to WandB project `dpfm_pusht_ablation`. Set your entity via environment variable:
+```bash
+export WANDB_ENTITY=<your_wandb_username>
+```
 
 ---
 
