@@ -88,11 +88,3 @@ FM configuration matching DDPM baseline:
 | DDPM Baseline | `dpfm/config/train_ddpm_unet_hybrid_pusht.yaml` |
 | FM UNet | `dpfm/config/train_fm_unet_hybrid_image_workspace.yaml` |
 | FM Transformer | `dpfm/config/train_fm_transformer_hybrid_image_workspace.yaml` |
-
-## WandB Logging
-
-All experiments logged to:
-- **Project**: `dpfm_pusht_ablation`
-- **Run Naming**: `{method}_{arch}_step{N}_seed{S}`
-
-Example: `fm_unet_step4_seed42`

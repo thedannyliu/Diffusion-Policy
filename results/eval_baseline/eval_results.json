@@ -1,6 +1,0 @@
-{
-  "test_mean_score": 0.8806103227108433,
-  "inference_latency_ms": 651.8797811708952,
-  "inference_latency_p50_ms": 650.0180959701538,
-  "inference_latency_p95_ms": 651.8754005432129
-}

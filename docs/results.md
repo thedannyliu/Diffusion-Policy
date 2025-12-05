@@ -60,20 +60,6 @@ This document presents the final results of our ablation study comparing Flow Ma
 
 ---
 
-## Checkpoint Locations
-
-Best checkpoints for each experiment:
-
-| Experiment | Checkpoint Path | Score |
-|------------|-----------------|-------|
-| ddpm_unet_s42 | `data/outputs/2025.12.04/04.06.14_train_ddpm_unet_hybrid_pusht_image/checkpoints/epoch=0450-test_mean_score=0.869.ckpt` | 0.869 |
-| fm_steps16 | `data/outputs/2025.12.04/03.31.47_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.844.ckpt` | 0.844 |
-| fm_lr5e-5 | `data/outputs/2025.12.04/11.23.53_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0450-test_mean_score=0.820.ckpt` | 0.820 |
-| fm_steps8 | `data/outputs/2025.12.04/03.31.51_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.801.ckpt` | 0.801 |
-| fm_unet_s42 | `data/outputs/2025.12.04/03.31.43_train_fm_unet_hybrid_pusht_image/checkpoints/epoch=0150-test_mean_score=0.777.ckpt` | 0.777 |
-
----
-
 ## Training Logs
 
 SLURM job logs are available in `logs/experiments/`:
@@ -98,7 +84,3 @@ SLURM job logs are available in `logs/experiments/`:
 3. **4-8 steps is optimal for FM** when prioritizing speed; 16 steps for best quality
 4. **UNet architecture is essential**; Transformer fails with FM on this task
 5. **Training is significantly faster** with FM (6-9 hours vs 19 hours)
-
----
-
-*Last updated: 2025-12-05*

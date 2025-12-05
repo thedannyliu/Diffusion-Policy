@@ -236,37 +236,6 @@ def sample(self, obs_encoding, num_steps=4):
 
 ---
 
-## 🖥️ Cluster Usage (Georgia Tech PACE)
-
-### Submit Training Jobs
-
-```bash
-# Submit all ablation experiments
-bash scripts/submit_experiments.sh
-
-# Submit single experiment (dry run)
-bash scripts/submit_experiments.sh --dry-run
-```
-
-### Submit Evaluation Jobs
-
-```bash
-sbatch scripts/eval.sh /path/to/checkpoint.ckpt results/eval_output
-```
-
-### Cluster Configuration
-
-| Setting | Value |
-|---------|-------|
-| Cluster | Georgia Tech PACE Phoenix |
-| GPU | NVIDIA L40S |
-| Partition | gpu-l40s |
-| Account | gts-agarg35-ideas_l40s |
-| Memory | 64 GB |
-| Time | 20 hours |
-
----
-
 ## 📁 Data Format
 
 ### PushT Dataset Structure
