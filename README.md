@@ -447,9 +447,15 @@ conda activate seg
 cd segment-anything-annotator
 pip install -r requirements.txt
 ```
+Then, do the following.
 
-Then, run the following
-```
+1. Download, `segmentation_data.zip` from:
+https://drive.google.com/file/d/15Gp5K1AVAm_rOEIaX3M6hw7NzyQLZmtV/view?usp=sharing 
+
+2. Unzip `segmentation_data.zip` into `Diffusion-Policy-Flow-Matching/segment-anything-annotator/diffusion`
+3. Then run the following:
+``` 
+conda activate seg
 python segment-anything-annotator/diffusion/calculate_iou.py
 ```
 
