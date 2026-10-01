@@ -32,7 +32,7 @@ The previous root README reports:
 
 Its boundary header says 18 positions, and the described collection grid has 32 interior plus 18 boundary positions. Trial-level records are absent from this checkout. Keep the discrepancy explicit until the original experiment records establish whether there were additional/repeated trials. Do not infer an overall rate or silently change a denominator.
 
-The real-robot runs use DDPM. The flow-matching results use PushT simulation. Project-level implementation and experimental work should be distinguished from each team member's individual contribution when presenting this project.
+The real-robot runs use DDPM. The flow-matching results use PushT simulation. Danny Liu developed the complete Flow Matching extension and contributed to the other project work apart from real-robot deployment, which was handled by teammates.
 
 ## Missing source restoration
 
