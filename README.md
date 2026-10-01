@@ -2,6 +2,12 @@
 
 An empirical study of visuomotor policy learning: reproduce a DDPM policy, replace its denoising objective with flow matching, and examine the speed–quality tradeoff on PushT. A separate real-robot study uses the DDPM baseline on a UR10e.
 
+## My contribution
+
+I developed the complete Flow Matching extension, including the conditional flow matching loss, Euler sampler, policy integration, and associated training and evaluation code. I also contributed to the baseline reproduction, simulation experiments, and analysis. Real-robot deployment was handled by my teammates.
+
+— Danny Liu
+
 **Start here:** [saved results](#results-you-can-inspect) · [implementation](#implementation-and-attribution) · [reproduction](#reproduction) · [evaluation notes](docs/evaluation_notes.md)
 
 ## Results you can inspect
