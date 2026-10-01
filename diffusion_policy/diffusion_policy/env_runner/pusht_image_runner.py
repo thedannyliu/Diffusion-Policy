@@ -22,6 +22,7 @@ from diffusion_policy.gym_util.video_recording_wrapper import VideoRecordingWrap
 
 from diffusion_policy.policy.base_image_policy import BaseImagePolicy
 from diffusion_policy.common.pytorch_util import dict_apply
+from diffusion_policy.common.task_success import episode_task_success
 from diffusion_policy.env_runner.base_image_runner import BaseImageRunner
 
 class PushTImageRunner(BaseImageRunner):
@@ -163,7 +164,7 @@ class PushTImageRunner(BaseImageRunner):
         all_video_paths = [None] * n_inits
         all_rewards = [None] * n_inits
         all_coverages = [None] * n_inits
-        all_dones = [None] * n_inits
+        all_successes = [None] * n_inits
         all_step_counts = [None] * n_inits
         all_final_distances = [None] * n_inits
         all_block_trajectories = [None] * n_inits
@@ -245,9 +246,9 @@ class PushTImageRunner(BaseImageRunner):
 
                 all_video_paths[global_idx] = video_paths[local_idx]
                 all_rewards[global_idx] = rewards_list[local_idx]
-                all_dones[global_idx] = dones_list[local_idx]
 
                 info = infos_list[local_idx] if local_idx < len(infos_list) else dict()
+                all_successes[global_idx] = episode_task_success(info)
                 
                 # Convert trajectory lists to numpy arrays
                 # Each info field is a list of values from each step
@@ -312,7 +313,6 @@ class PushTImageRunner(BaseImageRunner):
             prefix = self.env_prefixs[i]
             rewards = np.array(all_rewards[i]) if all_rewards[i] is not None else np.array([])
             coverages = np.array(all_coverages[i]) if all_coverages[i] is not None else np.array([])
-            dones = np.array(all_dones[i]) if all_dones[i] is not None else np.array([])
 
             # Aggregate reward-based score (same as original DP code)
             max_reward = float(np.max(rewards)) if rewards.size > 0 else 0.0
@@ -324,13 +324,8 @@ class PushTImageRunner(BaseImageRunner):
                 max_cov = float(np.max(coverages))
                 max_coverages[prefix].append(max_cov)
 
-            # Success indicator: whether episode ever satisfies success condition
-            if dones.size > 0:
-                success = float(np.max(dones))
-            else:
-                # Fallback: treat saturated reward as success
-                success = float(max_reward >= 1.0 - 1e-6)
-            success_rates[prefix].append(success)
+            # Environment success is distinct from wrapper time-limit termination.
+            success_rates[prefix].append(float(all_successes[i]))
 
             # Final distance and step count
             if all_final_distances[i] is not None:

@@ -2,6 +2,8 @@
 
 This document presents the comprehensive results of our ablation study comparing Flow Matching (FM) against DDPM for visuomotor policy learning on the PushT benchmark.
 
+> **Evaluation correction:** Historical success rates below count wrapper termination, including timeouts. They are invalid as task-success rates. See [evaluation notes](evaluation_notes.md). Latencies are historical sampler-only measurements (excluding observation encoding), not verified robot control frequencies.
+
 ## Executive Summary
 
 | Experiment | Method | Arch | Steps | Val Score | Test Score | Latency (p50) | Training Time | Speedup |
@@ -15,9 +17,9 @@ This document presents the comprehensive results of our ablation study comparing
 | fm_trans_s42 | FM | Trans | 4 | 0.117 | 0.114 | 20.9 ms | 7.2 hr | **30.4×** |
 
 **Key Findings**:
-- FM with optimized LR (5e-5) achieves **98% of DDPM test performance** with **27× faster inference**
+- FM with optimized LR (5e-5) achieves **98% of DDPM test performance** with **27× faster action sampling**
 - FM trains **2-3× faster** than DDPM (6-9 hours vs 19 hours)
-- Transformer architecture fails with FM; UNet is essential
+- The tested FM Transformer configuration performed poorly; broader architectural conclusions require additional experiments
 
 ---
 
@@ -83,7 +85,7 @@ Final evaluation was performed on 50 test episodes using the best checkpoint fro
 
 ### Test Metrics (50 Episodes)
 
-| Experiment | Test Score | Success Rate | Coverage | Final Dist | Steps | Smoothness |
+| Experiment | Test Score | Legacy termination rate (invalid success metric) | Coverage | Final Dist | Steps | Smoothness |
 |------------|------------|--------------|----------|------------|-------|------------|
 | ddpm_unet_s42 | **0.816** | 100% | 0.781 | 30.6 | 238.4 | 0.93 |
 | fm_lr5e-5 | 0.798 | 100% | 0.761 | 49.8 | 257.0 | 0.94 |
@@ -95,13 +97,13 @@ Final evaluation was performed on 50 test episodes using the best checkpoint fro
 
 **Metrics Explanation**:
 - **Test Score**: Overall performance metric (0-1, higher is better)
-- **Success Rate**: Percentage of episodes completing without failure
+- **Legacy termination rate (invalid success metric)**: Historical wrapper-termination rate; includes unsuccessful timeouts
 - **Coverage**: Fraction of target area covered by the T-block
 - **Final Dist**: Distance to target at episode end (lower is better)
 - **Steps**: Average steps per episode (max 300)
-- **Smoothness**: Trajectory jerk (lower is smoother)
+- **Smoothness**: Runner-defined trajectory smoothness statistic (lower is smoother; not a calibrated physical jerk measurement)
 
-### Inference Latency (50 Episodes)
+### Sampler Latency (50 Episodes)
 
 | Experiment | Mean (ms) | p50 (ms) | p95 (ms) | Speedup vs DDPM |
 |------------|-----------|----------|----------|-----------------|
@@ -113,7 +115,7 @@ Final evaluation was performed on 50 test episodes using the best checkpoint fro
 | fm_lr1e-3 | 24.9 | 23.1 | 23.2 | **27.5×** |
 | fm_trans_s42 | 57.7 | 20.9 | 21.0 | **30.4×** |
 
-**Observation**: FM with 4 steps achieves ~23ms latency, suitable for real-time control at 40+ Hz.
+**Observation**: FM with 4 steps achieves ~23ms latency, a sampler-only timing result; robot control frequency was not measured.
 
 ---
 
@@ -133,7 +135,7 @@ Final evaluation was performed on 50 test episodes using the best checkpoint fro
 **Conclusion**: 
 - 16 steps achieves 97% of DDPM validation performance
 - Diminishing returns beyond 8 steps for test performance
-- For real-time applications (>30 Hz), use 4 steps
+- The four-step run minimizes sampler latency in this sweep; end-to-end control frequency was not measured
 
 ### Ablation B: Learning Rate
 
@@ -147,7 +149,7 @@ Final evaluation was performed on 50 test episodes using the best checkpoint fro
 
 **Conclusion**: 
 - FM benefits from lower LR (5e-5) compared to DDPM default (1e-4)
-- Lower LR improves both validation and test scores by ~6%
+- Lower LR improves the recorded test score from 0.667 to 0.798; multi-seed evaluation is needed to estimate variability
 - Higher LR (1e-3) causes unstable training with worse final performance
 
 ### Ablation C: Architecture
@@ -160,8 +162,8 @@ Final evaluation was performed on 50 test episodes using the best checkpoint fro
 | Transformer Hybrid | 0.117 | 0.114 | 20.9 ms | ❌ Failed |
 
 **Conclusion**: 
-- Transformer completely fails to learn with FM
-- UNet's inductive biases (spatial hierarchies, skip connections) are crucial
+- The tested Transformer configuration did not learn a useful policy
+- The cause of this configuration's failure was not isolated
 - This differs from some FM image generation works where Transformer succeeds
 
 ---
@@ -188,18 +190,18 @@ An important observation is the gap between validation and test scores:
 
 ## Conclusions
 
-1. **Flow Matching achieves competitive performance**: FM-lr5e-5 reaches 98% of DDPM test performance while being 27× faster
+1. **Flow Matching achieves competitive performance**: FM-lr5e-5 reaches 98% of DDPM test performance with 27× faster recorded action sampling
 
 2. **Learning rate is critical for FM**: Lower LR (5e-5) significantly improves both performance and generalization
 
-3. **4-8 inference steps are practical**: 4 steps enables real-time control (40+ Hz), 8-16 steps for higher quality
+3. **4-8 inference steps are practical**: 4 steps reduces recorded inference latency, 8-16 steps for higher quality
 
-4. **UNet architecture is essential**: Transformer fails completely with FM on this task
+4. **Architecture result is configuration-specific**: the tested FM Transformer run performed poorly
 
 5. **FM trains 2-3× faster**: Reduced training time from 19 hours (DDPM) to 6-9 hours (FM)
 
 6. **Trade-off recommendation**:
-   - **Real-time applications**: FM with 4 steps, lr=5e-5 (23ms, 0.798 score)
+   - **Lowest recorded sampler latency**: FM with 4 steps, lr=5e-5 (23ms, 0.798 score)
    - **Best quality**: FM with 16 steps (90ms, 0.794 score) or DDPM (635ms, 0.816 score)
 
 ---

@@ -1,537 +1,91 @@
-# Diffusion Policy: Reproduction and Real-World Validation
+# Diffusion Policy with Flow Matching
 
-**CS 8803 Deep Reinforcement Learning - Final Project**
-**Georgia Institute of Technology - Prof. Animesh Garg**
+An empirical study of visuomotor policy learning: reproduce a DDPM policy, replace its denoising objective with flow matching, and examine the speed–quality tradeoff on PushT. A separate real-robot study uses the DDPM baseline on a UR10e.
 
-[![Python 3.9](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/release/python-390/)
-[![PyTorch 2.0](https://img.shields.io/badge/pytorch-2.0-red.svg)](https://pytorch.org/)
+**Start here:** [saved results](#results-you-can-inspect) · [implementation](#implementation-and-attribution) · [reproduction](#reproduction) · [evaluation notes](docs/evaluation_notes.md)
 
-## Overview
+## Results you can inspect
 
-This project presents a comprehensive empirical study of **Diffusion Policy** (Chi et al., RSS 2023) for visuomotor policy learning in robotic manipulation. We provide a faithful reproduction of the original method, validate it extensively in real-world scenarios, and introduce an efficient Flow Matching variant as an optional improvement.
+The committed evaluation files report the following PushT results. Each experiment uses 50 evaluation episodes; the study is primarily single-seed. These are historical measurements, not a new training run.
 
-### Three Principal Contributions
+| Configuration | Sampling steps | Mean score ↑ | Mean maximum coverage ↑ | Sampler p50 ↓ |
+| --- | ---: | ---: | ---: | ---: |
+| [DDPM UNet](results/ddpm_unet_s42/eval_results.json) | 100 | 0.8158 | 0.7811 | 635.05 ms |
+| [FM UNet, learning rate 5e-5](results/fm_lr5e-5/eval_results.json) | 4 | 0.7980 | 0.7610 | 23.14 ms |
+| [FM UNet](results/fm_steps8/eval_results.json) | 8 | 0.7687 | 0.7350 | 45.33 ms |
+| [FM UNet](results/fm_steps16/eval_results.json) | 16 | 0.7936 | 0.7580 | 90.43 ms |
 
-**1. Baseline Reproduction & Validation**
-We faithfully reproduce the DDPM-based Diffusion Policy with UNet architecture on the PushT simulation benchmark, establishing properly aligned quantitative metrics (test score, target coverage, success rate). Our reproduction achieves **0.816 test score** with **0.781 target coverage**, validating the baseline implementation and providing a solid foundation for further work.
+The four-step, lower-learning-rate FM run retains **97.8% of the baseline score** with **27.45× lower recorded p50 sampler latency**. It changes both the training objective and sampling budget; this is not an equal-step sampler comparison. Both timers cover the action sampler, excluding observation encoding and action postprocessing. The recorded time is not full-policy latency or a measured robot control frequency. The saved JSON does not include complete hardware/timing provenance, so cross-device performance claims require a new matched run.
 
-**2. Real-World Deployment & Ablation Studies**
-We conduct extensive real-world validation using a **UR10e robotic manipulator** on planar non-prehensile manipulation tasks. Through systematic ablation studies across observation modalities (monocular vs. stereo), object geometries (cube vs. sphere), and environmental perturbations, we establish practical feasibility boundaries of diffusion-based visuomotor policies. The two-camera stereo configuration achieves **100% success** across 32 interior workspace configurations for both object types.
-
-**3. Flow Matching Extension (Optional Efficiency Improvement)**
-As an additional contribution, we introduce Flow Matching as an alternative continuous-time training objective while maintaining identical network architecture. This variant achieves **98% of baseline performance** while reducing inference latency by **27×** (635ms → 24ms) and accelerating training by **3×**, serving as a drop-in replacement requiring only loss function and sampling procedure modifications.
-
-### Key Findings
-
-**Real-World Robot Deployment:**
-- Two-camera stereo configuration achieves **100% success** across 32 interior workspace positions for both cube and sphere objects
-- **Stereo vision is essential**: Single-camera setup degrades to 50% success for spheres and 93.8% for cubes
-- Policy demonstrates robustness to moderate visual perturbations but degrades under heavy environmental clutter
-- Cube manipulation requires more precise angular alignment than sphere (84.2% vs 57.9% success on boundary configurations)
-
-**Simulation Reproduction (PushT Benchmark):**
-- Successfully reproduced DDPM Diffusion Policy: **0.816 test score**, **0.781 target coverage**, 100% task success
-- Validated metrics align with original published results, confirming faithful implementation
-
-**Flow Matching Efficiency Gains (Optional):**
-- Achieves 98% of DDPM performance (0.798 score, 0.761 coverage) with only 4 ODE integration steps
-- **27× faster inference** (635ms → 24ms) enabling real-time control at 40+ Hz
-- **3× faster training** convergence compared to standard DDPM
-
----
-
-## Main Results
-
-### Real-World: Planar Non-Prehensile Manipulation
-
-| Observation Configuration | Object Geometry | Easy Spots (32) | Hard Spots (18) | Overall |
-|--------------------------|-----------------|-----------------|-----------------|---------|
-| **Two cameras (stereo)** | **Cube** | **32/32 (100%)** | 16/19 (84.2%) | 94.1% |
-| **Two cameras (stereo)** | **Sphere** | **32/32 (100%)** | 11/19 (57.9%) | 84.3% |
-| Single camera (monocular) | Cube | 30/32 (93.8%) | — | — |
-| Single camera (monocular) | Sphere | 16/32 (50.0%) | — | — |
-
-**Key Insight**: Stereo observation is essential for reliable visuomotor control in contact-rich manipulation. Single-camera configurations suffer catastrophic performance degradation for rotationally-symmetric objects (sphere: 50% vs 100% success).
-
-**Hardware**: UR10e robot with Robotiq 85 gripper, dual Intel RealSense D435 cameras, custom-designed task board with 3D-printed fixtures, SpaceMouse teleoperation for 100 demonstrations per task.
-
-### Simulation: PushT Benchmark Reproduction
-
-**DDPM Baseline (Reproduced):**
-- Test Score: **0.816** | Coverage: **0.781** | Success: **100%**
-- Inference: 635ms per step (100 denoising steps)
-- Training: ~19 hours on A40 GPU
-
-**Flow Matching Variant (Optional Efficiency Improvement):**
-
-| Configuration | Steps | Test Score | Coverage | Latency (p50) | Speedup |
-|--------------|-------|------------|----------|---------------|---------|
-| **FM (lr=5e-5)** | **4** | **0.798** | **0.761** | **23.1 ms** | **27.5×** |
-| FM (16 steps) | 16 | 0.794 | 0.758 | 90.4 ms | 7.0× |
-| FM (8 steps) | 8 | 0.769 | 0.735 | 45.3 ms | 14.0× |
-| FM (default lr) | 4 | 0.667 | 0.637 | 23.1 ms | 27.5× |
-
-*Flow Matching with optimized learning rate (5×10⁻⁵) achieves 98% of DDPM performance while enabling real-time control at 40+ Hz.*
-
-For detailed ablation results, see [docs/results.md](docs/results.md).
-
----
-
-## Repository Structure
-
-```
-Diffusion-Policy/
-├── README.md                     # This document
-├── report.pdf                    # Full technical report
-├── requirements.txt              # Python dependencies
-│
-├── diffusion_policy/             # Core implementation (DDPM baseline)
-│   ├── policy/                   # Policy architectures (UNet, Transformer)
-│   ├── model/                    # Vision encoders, diffusion models
-│   ├── dataset/                  # Data loading and preprocessing
-│   └── ...                       # Training, evaluation utilities
-│
-├── dpfm/                         # Extension: Flow Matching variant
-│   ├── config/                   # Training configurations
-│   │   ├── train_ddpm_unet_hybrid_pusht.yaml      # DDPM baseline config
-│   │   └── train_fm_unet_hybrid_image_workspace.yaml  # Flow Matching config
-│   ├── loss/                     # Flow matching loss (CFM)
-│   ├── sampler/                  # Euler ODE sampler
-│   ├── policy/                   # FM policy wrapper
-│   ├── train.py                  # Training script
-│   └── eval.py                   # Evaluation script
-│
-├── data/                         # Datasets (download separately)
-│   ├── training/
-│   │   ├── pusht/                # PushT simulation dataset
-│   │   ├── two_cameras_cube/     # Real robot cube demos
-│   │   └── two_cameras_sphere/   # Real robot sphere demos
-│   └── evaluations/              # Evaluation rollout data
-│
-├── notebooks/
-│   ├── data_visualization.ipynb  # Data loading guide and examples
-│   └── results_analysis.ipynb    # Result visualization and analysis
-│
-├── scripts/                      # Visualization and job submission scripts
-│   ├── plot_all_episodes_overlay.py    # Multi-episode trajectory plotting
-│   ├── plot_individual_episodes.py     # Single episode visualization
-│   ├── plot_training_vs_eval.py        # Training/eval comparison
-│   └── ...                             # Additional scripts
-│
-├── results/                      # Evaluation outputs
-└── docs/                         # Additional documentation
-```
-
----
-
-## Quick Start
-
-### 1. Environment Setup
+Inspect all seven experiment summaries with Python's standard library:
 
 ```bash
-# Clone repository
 git clone https://github.com/thedannyliu/Diffusion-Policy.git
 cd Diffusion-Policy
-
-# Create conda environment
-conda create -n DPFM python=3.9 -y
-conda activate DPFM
-
-# Install PyTorch (CUDA 11.8)
-pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install diffusion_policy in development mode
-cd diffusion_policy && pip install -e . && cd ..
+python scripts/summarize_results.py
 ```
 
-### 2. Download Data
+Example rollout from the four-step FM run:
 
-#### PushT Dataset (Simulation)
-```bash
-mkdir -p data/training
-cd data/training
-wget https://diffusion-policy.cs.columbia.edu/data/training/pusht.zip
-unzip pusht.zip
-cd ../..
-```
+![Saved PushT rollout for the four-step flow matching policy](results/fm_lr5e-5/trajectory_rollout_1.png)
 
-#### Real Robot Data & Plotting
+The [full per-episode log](results/fm_lr5e-5/eval_log_full.json) and [ablation report](docs/results.md) provide context beyond this example. The historical `test_success_rate` field is invalid: the old runner counted time-limit termination as success. It is excluded from this summary; the runner now reads explicit environment success flags for future evaluations. Historical JSON files remain unchanged for provenance.
 
-For training the diffusion policy from real collected demonstrations we used the following:
+## Implementation and attribution
+
+This is a Georgia Tech CS 8803 Deep Reinforcement Learning team project built on [Diffusion Policy by Chi et al.](https://github.com/real-stanford/diffusion_policy). The upstream implementation and license are retained under [`diffusion_policy/`](diffusion_policy). Flow matching builds on the published method; this repository studies its application to this policy architecture.
+
+| Component | Where to review |
+| --- | --- |
+| Conditional flow matching loss | [`dpfm/loss/flow_matching_loss.py`](dpfm/loss/flow_matching_loss.py) |
+| Euler integration sampler | [`dpfm/sampler/euler_sampler.py`](dpfm/sampler/euler_sampler.py) |
+| UNet policy integration | [`dpfm/policy/flow_matching_unet_hybrid_image_policy.py`](dpfm/policy/flow_matching_unet_hybrid_image_policy.py) |
+| Shared evaluation and export of metrics | [`dpfm/eval.py`](dpfm/eval.py) |
+| Experiment configurations | [`dpfm/config`](dpfm/config) |
+| Task-success regression check | [`tests/test_task_success.py`](tests/test_task_success.py) |
+
+The extension keeps the conditional UNet architecture and observation interface, changes the target from noise to velocity, and generates action chunks using a short Euler integration. Configuration files expose learning rate, sampling steps, seed, and training settings for ablations.
+
+## Reproduction
+
+### Inspect results and validate metric logic on a CPU
 
 ```bash
-Download data.zip (~2.5GB) from Google Drive
-# https://drive.google.com/drive/folders/1fy_uOMjU0OhQmbbqVIfamUVsaG92qr6L?usp=sharing
-
-In this folder you cand find our training data, visualizations and record of the evaluations/abllations conducted. 
-
-# Extract to repo root
-unzip data.zip
-
-# This creates:
-# - data/training/        (two_cameras_cube, two_cameras_sphere)
-# - data/evaluations/     (9 evaluation runs)
+python scripts/summarize_results.py
+PYTHONPATH=diffusion_policy python -m unittest discover -s tests -v
 ```
 
-**Optional**: Download pre-generated `Trajectory_Plots/` folder from the drive.
+These commands require no GPU, checkpoint, dataset, or third-party Python package. They inspect saved measurements and test task-success aggregation; they do not rerun the policies.
 
-**Verify your data download:**
-```bash
-# Use the data visualization notebook to check data integrity
-jupyter notebook notebooks/data_visualization.ipynb
-```
+### Train or evaluate a policy
 
-The notebook provides comprehensive data loading examples and uses visualization utilities from the `scripts/` directory to generate publication-quality trajectory plots with:
-- Start/end point markers (green circles and black stars/red X)
-- Initial robot pose indicators (pink pentagon)
-- Reference regions (board boundaries, workspace limits, target locations)
-- Success/failure differentiation with color-coded endpoints
-- Comprehensive legends for all plot elements
+The training stack is legacy research software. Start from the [upstream environment file](diffusion_policy/conda_environment.yaml) and [installation/data instructions](diffusion_policy/README.md), then check the extension [requirements](requirements.txt). A fresh end-to-end training installation has not been validated by the CPU checks above.
 
-See **[data/README.md](data/README.md)** for detailed setup instructions and plotting script usage.
+The PushT config expects the replay dataset at `diffusion_policy/data/pusht/pusht_cchi_v7_replay.zarr`, because the training entry point changes into the vendored `diffusion_policy` directory. You can override `task.dataset.zarr_path` with an absolute path.
 
-### 3. Training
+From the repository root in the configured training environment:
 
 ```bash
-# Set Python path
-export PYTHONPATH="${PWD}:${PWD}/diffusion_policy:$PYTHONPATH"
-cd diffusion_policy
+python -m dpfm.train --config-name=train_fm_unet_hybrid_image_workspace \
+  policy.num_inference_steps=4 optimizer.lr=5e-5 training.seed=42
 
-# Train DDPM baseline (original Diffusion Policy, 100 inference steps)
-python dpfm/train.py --config-name=train_ddpm_unet_hybrid_pusht \
-    training.seed=42
-
-# OPTIONAL: Train Flow Matching variant for faster inference
-# Flow Matching with optimized learning rate (recommended)
-python dpfm/train.py --config-name=train_fm_unet_hybrid_image_workspace \
-    policy.num_inference_steps=4 \
-    optimizer.lr=5e-5 \
-    training.seed=42
-
-# Flow Matching with default settings
-python dpfm/train.py --config-name=train_fm_unet_hybrid_image_workspace \
-    policy.num_inference_steps=4 \
-    training.seed=42
+python -m dpfm.eval --checkpoint /absolute/path/to/model.ckpt \
+  --output_dir eval_output --n_test 50 --device cuda:0 --wandb_mode disabled
 ```
 
-### 4. Evaluation
+Trained checkpoints and real-robot demonstrations are not bundled. Reproducing the policies requires obtaining the corresponding data and training or supplying a compatible checkpoint.
 
-```bash
-# Evaluate a trained checkpoint
-python dpfm/eval.py \
-    --checkpoint_path data/outputs/2025.12.04/<run_dir>/checkpoints/latest.ckpt \
-    --n_eval_episodes 50 \
-    --output_dir results/eval_output
-```
+## Real-robot study
 
-### 5. Explore and Visualize Data
+The existing project write-up describes DDPM evaluation on a UR10e with dual RGB camera observations, SpaceMouse demonstrations, and cube/sphere pushing into goal slots. **Flow Matching was evaluated in PushT simulation only.** A robot demo should therefore identify which policy is running.
 
-To understand the data format and verify your download:
+The historical write-up reports 32/32 successes for each object in the two-camera interior-position trials. Boundary-trial counts are inconsistent (18 positions versus denominators of 19), and trial-level records are not committed. The [evaluation notes](docs/evaluation_notes.md) preserve these unresolved details; the counts should be reconciled before using an overall real-robot success claim.
 
-```bash
-# Visualize sample data from each dataset
-jupyter notebook notebooks/data_visualization.ipynb
-```
+## What the experiments do and do not establish
 
-This notebook demonstrates how to:
-- Load training data (Zarr format for both simulation and real robot)
-- Load evaluation rollout recordings
-- Visualize camera observations and action trajectories
-- Generate publication-quality trajectory plots with comprehensive annotations
-- Compare training demonstrations with evaluation rollouts
+- Four-step FM is a promising operating point in these saved runs. Multiple training seeds are needed to quantify uncertainty.
+- Learning rate changes materially affect the result. The best four-step row is not a controlled step-count-only ablation.
+- The tested FM Transformer configuration performs poorly. One configuration does not establish that Transformers cannot learn flow-matching policies.
+- A measured speed–quality tradeoff in PushT does not demonstrate real-world FM deployment or generalization to other manipulation tasks.
 
-The visualization system uses utilities from `scripts/plot_all_episodes_overlay.py`, `scripts/plot_individual_episodes.py`, and `scripts/plot_training_vs_eval.py` to create professional plots featuring:
-- **Trajectory overlays** with color-coded episodes
-- **Start/end markers**: Green circles (start), black stars (success), red X (failure)
-- **Initial robot pose**: Pink pentagon showing starting configuration
-- **Reference regions**: Board boundaries (brown dashed), workspace limits (gray dotted)
-- **Target locations**: Cube target (rotated orange square), Sphere target (cyan circle)
-- **Comprehensive legends** for all plot elements
-
-### 6. Reproduce Results
-
-Open `notebooks/results_analysis.ipynb` in Jupyter to reproduce the key metrics and visualizations:
-
-```bash
-jupyter notebook notebooks/results_analysis.ipynb
-```
-
----
-
-## Method
-
-We implement and reproduce the **Diffusion Policy** architecture (Chi et al., RSS 2023) for visuomotor control, deploying it on both simulation and real-world robotic manipulation tasks. Additionally, we introduce an optional **Flow Matching** variant that achieves comparable performance with significantly reduced computational cost.
-
-### Core Architecture: Diffusion Policy (DDPM)
-
-The baseline method uses a UNet-based conditional diffusion model for action-space generation:
-
-**Architecture Components:**
-- **Vision Encoder**: ResNet18 with spatial softmax pooling (trained end-to-end, no pretraining)
-- **State Encoder**: Low-dimensional MLP for proprioceptive observations (robot joint states)
-- **Temporal Backbone**: 1D Convolutional UNet operating over action sequences
-- **Conditioning**: Feature-wise Linear Modulation (FiLM) to inject observation context into denoising
-- **Action Representation**: Position control with prediction horizon=16, action horizon=8
-
-**Training Objective (DDPM):**
-- Network learns to predict noise $\epsilon_\theta(x_t, t, o)$ at discrete diffusion timesteps
-- Training loss: $\mathcal{L}_{\text{DDPM}} = \mathbb{E}_{x_0, \epsilon, t}\|\epsilon - \epsilon_\theta(\sqrt{\bar{\alpha}_t}x_0 + \sqrt{1-\bar{\alpha}_t}\epsilon, t, o)\|^2$
-- Inference: Iterative denoising via $x_{t-1} = \alpha(x_t - \gamma\epsilon_\theta(x_t,t,o)) + \mathcal{N}(0,\sigma^2I)$
-- Requires 100 denoising steps for high-quality action generation
-
-**Implementation Details:**
-- Position control (not velocity) for stability
-- AdamW optimizer with cosine learning rate schedule
-- Exponential Moving Average (EMA) for stable policy evaluation
-- Training time: ~12-19 hours on A40/L40S GPU
-
-### Optional Extension: Flow Matching
-
-As an efficiency improvement, we introduce continuous-time flow matching while maintaining the **identical UNet architecture**:
-
-**Modified Training Objective:**
-- Network predicts velocity field $v_\theta(x_t, t, o)$ over action manifold instead of noise
-- Training loss: $\mathcal{L}_{\text{FM}} = \mathbb{E}_{x_1, \epsilon, t}\|v_\theta((1-t)\epsilon + tx_1, t, o) - (x_1 - \epsilon)\|^2$
-- Inference: Deterministic ODE integration via $x_{t+\Delta t} = x_t + v_\theta(x_t, t, o)\Delta t$
-- Only 4-16 Euler integration steps needed (vs 100 for DDPM)
-
-**Key Insight**: Flow Matching is a drop-in replacement requiring only loss function and sampling procedure changes—the UNet architecture, visual encoders, and conditioning mechanisms remain identical to DDPM.
-
-**Performance Comparison:**
-
-| Aspect | DDPM (Baseline) | Flow Matching (Ours) |
-|--------|-----------------|----------------------|
-| Training target | Predict noise $\epsilon$ | Predict velocity $v$ |
-| Inference steps | 100 denoising steps | 4-16 ODE steps |
-| Inference latency | ~635 ms/step | ~23-90 ms/step |
-| Training time | ~19 hours | ~6-9 hours |
-| PushT test score | 0.816 | 0.798 (98% of baseline) |
-
----
-
-## Experimental Ablations
-
-We conduct systematic ablation studies to evaluate both the reproduced DDPM baseline and the Flow Matching extension. All experiments use controlled conditions with identical hyperparameters unless explicitly varied.
-
-### Flow Matching Ablations (Simulation Only)
-
-The following ablations study the Flow Matching variant in PushT simulation. Real-world experiments use the DDPM baseline.
-
-#### 1. ODE Integration Steps
-
-| Integration Steps | Test Score | Coverage | Latency (ms) | Relative Speedup |
-|------------------|------------|----------|--------------|------------------|
-| 4 | 0.798 | 0.761 | 23.1 | **27.5×** |
-| 8 | 0.769 | 0.735 | 45.3 | 14.0× |
-| 16 | 0.794 | 0.758 | 90.4 | 7.0× |
-| 100 (DDPM) | 0.816 | 0.781 | 635.0 | 1.0× |
-
-**Analysis**: Flow Matching exhibits relative insensitivity to the number of Euler integration steps across the 4-16 range, with performance variance <4%. This suggests that the learned velocity field provides sufficient smoothness for accurate trajectory integration with minimal discretization. The optimal operating point (4 steps) achieves 98% of DDPM performance while enabling real-time control at 40+ Hz.
-
-#### 2. Learning Rate Sensitivity
-
-| Learning Rate | Test Score | Coverage | Training Stability |
-|--------------|------------|----------|-------------------|
-| 1×10⁻⁴ (default) | 0.667 | 0.637 | Baseline |
-| **5×10⁻⁵** | **0.798** | **0.761** | Enhanced convergence |
-| 1×10⁻³ | 0.666 | 0.637 | Optimization instability |
-
-**Analysis**: Flow Matching demonstrates marked sensitivity to learning rate selection, with a 20% performance improvement under conservative optimization (5×10⁻⁵). This contrasts with DDPM's relative robustness to learning rate variation, suggesting that continuous-time formulations require more careful tuning of the optimization landscape. Aggressive learning rates (1×10⁻³) induce training instability without performance gains.
-
-#### 3. Architecture Comparison (UNet vs Transformer)
-
-| Backbone | Training Objective | Test Score | Convergence |
-|----------|-------------------|------------|-------------|
-| UNet | DDPM | 0.816 | Stable |
-| UNet | Flow Matching | 0.798 | Stable |
-| Transformer | Flow Matching | 0.114 | Failed |
-
-**Analysis**: The convolutional UNet architecture with Feature-wise Linear Modulation (FiLM) conditioning demonstrates consistent efficacy across both DDPM and Flow Matching objectives. In stark contrast, Transformer-based temporal models fail catastrophically under Flow Matching training (0.114 test score ≈ random policy). This architectural dependency suggests that local temporal inductive biases inherent to convolutions may be crucial for learning smooth velocity fields in action space.
-
-### Real-World Ablations (DDPM Baseline)
-
-The following ablations evaluate the reproduced DDPM Diffusion Policy on real robot hardware (UR10e).
-
-#### 4. Observation Modality: Monocular vs Stereo
-
-| Visual Configuration | Cube Success | Sphere Success | Geometric Robustness |
-|---------------------|--------------|----------------|---------------------|
-| Stereo (two cameras) | 100% | 100% | Complete |
-| Monocular (single camera) | 93.8% | 50.0% | Degraded |
-
-**Analysis**: Stereo visual observation proves essential for reliable manipulation, particularly for rotationally-symmetric objects. The 50% performance degradation for spherical objects under monocular observation indicates that depth perception is critical for accurate contact positioning in non-prehensile manipulation. The asymmetry between cube (93.8%) and sphere (50%) performance under monocular observation suggests that geometric features with directional cues provide partial compensation for missing depth information.
-
----
-
-## Data Format
-
-### PushT Dataset Structure
-```
-data/training/pusht/
-├── pusht_cchi_v7_replay.zarr/
-│   ├── data/
-│   │   ├── action/           # (N, 2) - delta x, delta y
-│   │   ├── img/              # (N, 96, 96, 3) - RGB images
-│   │   ├── keypoint/         # (N, 9, 2) - keypoints
-│   │   └── state/            # (N, 5) - agent state
-│   └── meta/
-│       └── episode_ends      # Episode boundaries
-```
-
-### Real Robot Data Structure
-```
-data/training/real_robot/
-├── two_cameras_cube/         # Cube manipulation task
-│   └── *.hdf5
-└── two_cameras_sphere/       # Sphere manipulation task
-    └── *.hdf5
-```
-
-## Real-World Experimental Setup
-
-To validate the practical applicability of diffusion-based visuomotor policies beyond simulation, we design and execute a systematic real-world evaluation on a planar non-prehensile manipulation task. Our experimental protocol emphasizes reproducibility and controlled variation of environmental factors.
-
-### Hardware Configuration
-
-**Robotic Platform**: Universal Robots UR10e collaborative manipulator equipped with Robotiq 85 adaptive parallel-jaw gripper. The UR10e provides 6-DOF workspace coverage with ±0.1mm repeatability, enabling precise positioning for contact-based manipulation.
-
-**Perception System**: Dual Intel RealSense D435 RGB-D cameras positioned at complementary viewpoints (frontal and lateral) to provide stereo visual observation. RGB channels exclusively utilized (depth discarded) to match simulation-trained policy input modality.
-
-**Teleoperation Interface**: 3Dconnexion SpaceMouse for kinesthetic demonstration collection, providing intuitive 6-DOF Cartesian control with vertical axis fixed to maintain planar constraint.
-
-**Custom Fixtures**: Task board, camera mounts, and slot inserts designed in Onshape and fabricated via FDM 3D printing, ensuring geometric consistency across data collection and evaluation episodes.
-
-### Task Specification
-
-**Objective**: Planar non-prehensile pushing to transport objects from arbitrary workspace configurations into designated goal slots via contact manipulation.
-
-**Object Geometries**:
-- Cubic: 30mm × 30mm base, 40mm height (introduces angular alignment requirements)
-- Spherical: 30mm diameter, 40mm height (rotationally symmetric, minimal alignment constraints)
-
-**Goal Specification**: 40mm × 40mm internal slot dimensions, providing 10mm tolerance envelope around object base to admit slight positioning errors while maintaining non-trivial insertion requirements.
-
-### Demonstration Collection Protocol
-
-**Dataset Scale**: 100 kinesthetic demonstrations per object geometry (200 total trajectories)
-
-**Spatial Coverage**: 50-position grid spanning workspace (5×10 lattice), partitioned into:
-- 32 "easy" configurations (interior region with direct paths to goal)
-- 18 "hard" configurations (boundary positions requiring longer, obstacle-aware trajectories)
-
-**Rotational Augmentation**: For cubic objects, two collection cycles with distinct orientation distributions:
-1. First cycle: Fixed canonical orientation
-2. Second cycle: Uniformly random in-plane rotations
-
-This augmentation strategy encourages learning rotation-invariant pushing strategies rather than memorizing orientation-specific contact points.
-
-### Evaluation Protocol
-
-**Success Criterion**: Binary classification based on physical insertion into goal slot (ground truth determined by mechanical contact, independent of visual observation)
-
-**Episode Constraints**:
-- 30-second temporal budget per trial
-- Standardized reset procedure to eliminate configuration drift
-- Robot initialization to fixed home pose in base frame coordinates
-
-**Metric Computation**: Success rate aggregated across spatial configurations, stratified by difficulty (easy vs. hard) and object geometry to isolate task complexity factors.
-
-## IoU using Segmentation
-It's recommended to create a separate conda environment to evaluate IoU.
-```
-conda create -n seg python==3.10.0
-conda activate seg
-cd segment-anything-annotator
-pip install -r requirements.txt
-```
-Then, do the following.
-
-1. Download, `segmentation_data.zip` from:
-https://drive.google.com/file/d/15Gp5K1AVAm_rOEIaX3M6hw7NzyQLZmtV/view?usp=sharing 
-
-2. Unzip `segmentation_data.zip` into `Diffusion-Policy-Flow-Matching/segment-anything-annotator/diffusion`
-3. Then run the following:
-``` 
-conda activate seg
-python segment-anything-annotator/diffusion/calculate_iou.py
-```
-
-**Note**: IoU found to be unreliable metric for small objects due to camera pose and segmentation sensitivity. Physical success (slot insertion) used as primary metric.
-
----
-
-## Conclusions
-
-### Summary of Contributions
-
-This work presents a comprehensive empirical study of Diffusion Policy through three main contributions:
-
-**1. Faithful Baseline Reproduction**
-
-We successfully reproduced the DDPM-based Diffusion Policy with UNet architecture on the PushT benchmark, achieving **test score 0.816** with **target coverage 0.781** and 100% success rate. This reproduction, aligned with the original evaluation protocol and metrics, provides a validated baseline that served as the foundation for real-world deployment and comparative analysis.
-
-**2. Extensive Real-World Validation**
-
-We conducted systematic real-world evaluation on a UR10e robotic manipulator performing planar non-prehensile manipulation with custom-designed hardware. Key findings:
-
-- **Stereo vision is essential**: Two-camera configuration achieves 100% success on 32 interior workspace positions for both cube and sphere objects
-- **Monocular observation catastrophically degrades performance**: Single-camera setup drops to 50% success for spheres (vs 100% for stereo)
-- **Robustness to moderate perturbations**: Policy handles gripper appearance changes and limited clutter but degrades under heavy environmental disturbances
-- **Geometric complexity matters**: Cubes require more precise angular alignment than spheres (84% vs 58% success on boundary configurations)
-
-**3. Flow Matching Efficiency Improvement (Optional)**
-
-As an additional contribution, we introduce continuous-time Flow Matching as a drop-in replacement for DDPM, using the identical UNet architecture but replacing only the loss function and sampling procedure:
-
-- Achieves **98% of baseline performance** (0.798 vs 0.816 test score)
-- **27× faster inference** (24ms vs 635ms) enabling real-time control at 40+ Hz
-- **3× faster training** convergence
-- Demonstrates that discrete-time diffusion may be over-parameterized for action-space generation
-
-**Other Key Findings:**
-
-- **Architecture matters**: UNet succeeds for both DDPM and Flow Matching; Transformer fails catastrophically with Flow Matching (0.114 test score)
-- **Hyperparameter sensitivity**: Flow Matching requires careful learning rate tuning (5×10⁻⁵ optimal vs 1×10⁻⁴ default)
-
-### Limitations and Future Research Directions
-
-**Statistical Rigor**: The majority of our experiments utilize single random seeds due to computational constraints. Multi-seed evaluation across diverse initialization conditions would strengthen the statistical validity of our comparative claims.
-
-**Real-World Flow Matching Deployment**: Our real-world validation utilizes the reproduced DDPM baseline policy, while the Flow Matching variant remains evaluated exclusively in PushT simulation. Given that Flow Matching maintains the identical UNet architecture and requires only training objective modification, real robot deployment would provide valuable evidence regarding whether the 27× inference speedup translates to improved closed-loop control performance in physical systems with sensor latencies and actuation delays.
-
-**Architectural Exploration**: The failure of Transformer backbones under Flow Matching training suggests that attention-based architectures may require specialized normalization schemes or hybrid designs combining convolutional inductive biases with long-range dependencies.
-
-**Domain Complexity**: Our evaluation focuses on planar non-prehensile manipulation—a constrained domain with reduced state dimensionality. Extension to contact-rich grasping, multi-step task composition, or deformable object manipulation would assess the scalability of diffusion-based policy learning to higher-complexity manipulation problems.
-
-**Theoretical Understanding**: The empirical success of Flow Matching over DDPM raises theoretical questions regarding the role of discrete vs. continuous-time formulations in learning action distributions. Formal analysis of approximation error, sample complexity, and convergence guarantees would provide principled guidance for objective selection.
-
----
-
-## References
-
-1. Chi, C., et al. "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion." RSS 2023. [[Paper](https://arxiv.org/abs/2303.04137)] [[Code](https://github.com/real-stanford/diffusion_policy)]
-
-2. Lipman, Y., et al. "Flow Matching for Generative Modeling." ICLR 2023. [[Paper](https://arxiv.org/abs/2210.02747)]
-
-3. Liu, X., et al. "Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow." ICLR 2023. [[Paper](https://arxiv.org/abs/2209.03003)]
-
----
-
-## License
-
-This project is for educational purposes (CS 8803 Deep Reinforcement Learning, Georgia Tech). The original Diffusion Policy code is under MIT License.
-
-## Acknowledgments
-
-We gratefully acknowledge the following contributions to this work:
-
-- **Cheng Chi, Siyuan Feng, Yilun Du, Zhenjia Xu, Eric Cousineau, Benjamin Burchfiel, and Shuran Song** for developing the original Diffusion Policy framework and releasing their codebase, which served as the foundation for our reproduction and extension.
-
-- **Professor Animesh Garg** and the CS 8803 Deep Reinforcement Learning teaching staff at Georgia Institute of Technology for guidance on experimental design and rigorous empirical evaluation.
-
-- **Georgia Tech Partnership for an Advanced Computing Environment (PACE)** for providing computational resources essential for large-scale hyperparameter sweeps and multi-seed training runs.
-
-- **Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, and Matthew Le** for their foundational work on Flow Matching for Generative Modeling (ICLR 2023), which inspired our continuous-time alternative formulation.
+See [evaluation notes](docs/evaluation_notes.md) for metric definitions, evidence gaps, and the next reproducibility checks.
